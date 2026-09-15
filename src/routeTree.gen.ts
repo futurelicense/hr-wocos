@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as HrRouteImport } from './routes/hr'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as HrIndexRouteImport } from './routes/hr.index'
 import { Route as HrAnalyticsRouteImport } from './routes/hr.analytics'
 import { Route as HrAttendanceRouteImport } from './routes/hr.attendance'
@@ -44,6 +45,11 @@ const IndexRoute = IndexRouteImport.update({
 const HrRoute = HrRouteImport.update({
   id: '/hr',
   path: '/hr',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HrIndexRoute = HrIndexRouteImport.update({
@@ -170,6 +176,7 @@ const HrSettingsWorkflowsRoute = HrSettingsWorkflowsRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/hr': typeof HrRouteWithChildren
+  '/login': typeof LoginRoute
   '/hr/analytics': typeof HrAnalyticsRoute
   '/hr/attendance': typeof HrAttendanceRoute
   '/hr/candidates': typeof HrCandidatesRoute
@@ -197,6 +204,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
   '/hr/analytics': typeof HrAnalyticsRoute
   '/hr/attendance': typeof HrAttendanceRoute
   '/hr/candidates': typeof HrCandidatesRoute
@@ -226,6 +234,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/hr': typeof HrRouteWithChildren
+  '/login': typeof LoginRoute
   '/hr/analytics': typeof HrAnalyticsRoute
   '/hr/attendance': typeof HrAttendanceRoute
   '/hr/candidates': typeof HrCandidatesRoute
@@ -256,6 +265,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/hr'
+    | '/login'
     | '/hr/analytics'
     | '/hr/attendance'
     | '/hr/candidates'
@@ -283,6 +293,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/login'
     | '/hr/analytics'
     | '/hr/attendance'
     | '/hr/candidates'
@@ -311,6 +322,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/hr'
+    | '/login'
     | '/hr/analytics'
     | '/hr/attendance'
     | '/hr/candidates'
@@ -340,6 +352,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   HrRoute: typeof HrRouteWithChildren
+  LoginRoute: typeof LoginRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -356,6 +369,13 @@ declare module '@tanstack/react-router' {
       path: '/hr'
       fullPath: '/hr'
       preLoaderRoute: typeof HrRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/hr/': {
@@ -588,6 +608,7 @@ const HrRouteWithChildren = HrRoute._addFileChildren(HrRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   HrRoute: HrRouteWithChildren,
+  LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
