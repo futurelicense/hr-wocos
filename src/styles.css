@@ -1,0 +1,204 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * WoCOS HR — "Control Tower Console" design system.
+ * Dark operational console: charcoal panels, hairline rules, signal colors.
+ * Space Grotesk (display) / IBM Plex Sans (body) / IBM Plex Mono (data).
+ * All colors are oklch semantic tokens. Never hardcode colors in components.
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  /* console surface scale */
+  --color-ink: var(--ink);
+  --color-panel: var(--panel);
+  --color-panel2: var(--panel2);
+  --color-line: var(--line);
+  --color-mute: var(--mute);
+  --color-dim: var(--dim);
+  --color-fg: var(--fg);
+
+  /* signal colors */
+  --color-teal: var(--teal);
+  --color-amber: var(--amber);
+  --color-coral: var(--coral);
+  --color-sky: var(--sky);
+  --color-violet: var(--violet);
+
+  /* shadcn semantic mapping */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--teal);
+  --color-chart-2: var(--sky);
+  --color-chart-3: var(--amber);
+  --color-chart-4: var(--violet);
+  --color-chart-5: var(--coral);
+}
+
+:root {
+  --radius: 0.5rem;
+
+  --ink: oklch(0.185 0.005 275);
+  --panel: oklch(0.238 0.008 275);
+  --panel2: oklch(0.278 0.01 275);
+  --line: oklch(0.338 0.014 272);
+  --mute: oklch(0.645 0.02 260);
+  --dim: oklch(0.762 0.02 262);
+  --fg: oklch(0.938 0.008 265);
+
+  --teal: oklch(0.78 0.15 163);
+  --amber: oklch(0.812 0.132 82);
+  --coral: oklch(0.712 0.168 21);
+  --sky: oklch(0.782 0.092 218);
+  --violet: oklch(0.72 0.13 300);
+
+  --background: var(--ink);
+  --foreground: var(--fg);
+  --card: var(--panel);
+  --card-foreground: var(--fg);
+  --popover: var(--panel2);
+  --popover-foreground: var(--fg);
+  --primary: var(--teal);
+  --primary-foreground: var(--ink);
+  --secondary: var(--panel2);
+  --secondary-foreground: var(--dim);
+  --muted: var(--panel2);
+  --muted-foreground: var(--mute);
+  --accent: var(--panel2);
+  --accent-foreground: var(--fg);
+  --destructive: var(--coral);
+  --destructive-foreground: var(--ink);
+  --border: var(--line);
+  --input: var(--line);
+  --ring: var(--teal);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.015em;
+  }
+
+  ::selection {
+    background-color: color-mix(in oklab, var(--teal) 30%, transparent);
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--ink);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--line);
+    border-radius: 99px;
+    border: 3px solid var(--ink);
+  }
+}
+
+/* Console primitives */
+
+@utility console-label {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--mute);
+}
+
+@utility console-panel {
+  background-color: var(--panel);
+  border-radius: var(--radius-lg);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+@utility console-inset {
+  background-color: var(--panel2);
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+@utility numeral {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+@utility data-cell {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes latch {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@utility animate-latch {
+  transform-origin: left center;
+  animation: latch 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@utility animate-rise {
+  animation: rise 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
