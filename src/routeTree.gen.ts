@@ -10,33 +10,132 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as HrRouteImport } from './routes/hr'
+import { Route as HrIndexRouteImport } from './routes/hr.index'
+import { Route as HrCandidatesRouteImport } from './routes/hr.candidates'
+import { Route as HrInterviewsRouteImport } from './routes/hr.interviews'
+import { Route as HrOffersRouteImport } from './routes/hr.offers'
+import { Route as HrVacanciesRouteImport } from './routes/hr.vacancies'
+import { Route as HrVerificationRouteImport } from './routes/hr.verification'
+import { Route as HrWorkforceRequestsRouteImport } from './routes/hr.workforce-requests'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HrRoute = HrRouteImport.update({
+  id: '/hr',
+  path: '/hr',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HrIndexRoute = HrIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => HrRoute,
+} as any)
+const HrCandidatesRoute = HrCandidatesRouteImport.update({
+  id: '/candidates',
+  path: '/candidates',
+  getParentRoute: () => HrRoute,
+} as any)
+const HrInterviewsRoute = HrInterviewsRouteImport.update({
+  id: '/interviews',
+  path: '/interviews',
+  getParentRoute: () => HrRoute,
+} as any)
+const HrOffersRoute = HrOffersRouteImport.update({
+  id: '/offers',
+  path: '/offers',
+  getParentRoute: () => HrRoute,
+} as any)
+const HrVacanciesRoute = HrVacanciesRouteImport.update({
+  id: '/vacancies',
+  path: '/vacancies',
+  getParentRoute: () => HrRoute,
+} as any)
+const HrVerificationRoute = HrVerificationRouteImport.update({
+  id: '/verification',
+  path: '/verification',
+  getParentRoute: () => HrRoute,
+} as any)
+const HrWorkforceRequestsRoute = HrWorkforceRequestsRouteImport.update({
+  id: '/workforce-requests',
+  path: '/workforce-requests',
+  getParentRoute: () => HrRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/hr': typeof HrRouteWithChildren
+  '/hr/candidates': typeof HrCandidatesRoute
+  '/hr/interviews': typeof HrInterviewsRoute
+  '/hr/offers': typeof HrOffersRoute
+  '/hr/vacancies': typeof HrVacanciesRoute
+  '/hr/verification': typeof HrVerificationRoute
+  '/hr/workforce-requests': typeof HrWorkforceRequestsRoute
+  '/hr/': typeof HrIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/hr/candidates': typeof HrCandidatesRoute
+  '/hr/interviews': typeof HrInterviewsRoute
+  '/hr/offers': typeof HrOffersRoute
+  '/hr/vacancies': typeof HrVacanciesRoute
+  '/hr/verification': typeof HrVerificationRoute
+  '/hr/workforce-requests': typeof HrWorkforceRequestsRoute
+  '/hr': typeof HrIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/hr': typeof HrRouteWithChildren
+  '/hr/candidates': typeof HrCandidatesRoute
+  '/hr/interviews': typeof HrInterviewsRoute
+  '/hr/offers': typeof HrOffersRoute
+  '/hr/vacancies': typeof HrVacanciesRoute
+  '/hr/verification': typeof HrVerificationRoute
+  '/hr/workforce-requests': typeof HrWorkforceRequestsRoute
+  '/hr/': typeof HrIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/hr'
+    | '/hr/candidates'
+    | '/hr/interviews'
+    | '/hr/offers'
+    | '/hr/vacancies'
+    | '/hr/verification'
+    | '/hr/workforce-requests'
+    | '/hr/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/hr/candidates'
+    | '/hr/interviews'
+    | '/hr/offers'
+    | '/hr/vacancies'
+    | '/hr/verification'
+    | '/hr/workforce-requests'
+    | '/hr'
+  id:
+    | '__root__'
+    | '/'
+    | '/hr'
+    | '/hr/candidates'
+    | '/hr/interviews'
+    | '/hr/offers'
+    | '/hr/vacancies'
+    | '/hr/verification'
+    | '/hr/workforce-requests'
+    | '/hr/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  HrRoute: typeof HrRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +147,90 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/hr': {
+      id: '/hr'
+      path: '/hr'
+      fullPath: '/hr'
+      preLoaderRoute: typeof HrRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hr/': {
+      id: '/hr/'
+      path: '/'
+      fullPath: '/hr/'
+      preLoaderRoute: typeof HrIndexRouteImport
+      parentRoute: typeof HrRoute
+    }
+    '/hr/candidates': {
+      id: '/hr/candidates'
+      path: '/candidates'
+      fullPath: '/hr/candidates'
+      preLoaderRoute: typeof HrCandidatesRouteImport
+      parentRoute: typeof HrRoute
+    }
+    '/hr/interviews': {
+      id: '/hr/interviews'
+      path: '/interviews'
+      fullPath: '/hr/interviews'
+      preLoaderRoute: typeof HrInterviewsRouteImport
+      parentRoute: typeof HrRoute
+    }
+    '/hr/offers': {
+      id: '/hr/offers'
+      path: '/offers'
+      fullPath: '/hr/offers'
+      preLoaderRoute: typeof HrOffersRouteImport
+      parentRoute: typeof HrRoute
+    }
+    '/hr/vacancies': {
+      id: '/hr/vacancies'
+      path: '/vacancies'
+      fullPath: '/hr/vacancies'
+      preLoaderRoute: typeof HrVacanciesRouteImport
+      parentRoute: typeof HrRoute
+    }
+    '/hr/verification': {
+      id: '/hr/verification'
+      path: '/verification'
+      fullPath: '/hr/verification'
+      preLoaderRoute: typeof HrVerificationRouteImport
+      parentRoute: typeof HrRoute
+    }
+    '/hr/workforce-requests': {
+      id: '/hr/workforce-requests'
+      path: '/workforce-requests'
+      fullPath: '/hr/workforce-requests'
+      preLoaderRoute: typeof HrWorkforceRequestsRouteImport
+      parentRoute: typeof HrRoute
+    }
   }
 }
 
+interface HrRouteChildren {
+  HrCandidatesRoute: typeof HrCandidatesRoute
+  HrInterviewsRoute: typeof HrInterviewsRoute
+  HrOffersRoute: typeof HrOffersRoute
+  HrVacanciesRoute: typeof HrVacanciesRoute
+  HrVerificationRoute: typeof HrVerificationRoute
+  HrWorkforceRequestsRoute: typeof HrWorkforceRequestsRoute
+  HrIndexRoute: typeof HrIndexRoute
+}
+
+const HrRouteChildren: HrRouteChildren = {
+  HrCandidatesRoute: HrCandidatesRoute,
+  HrInterviewsRoute: HrInterviewsRoute,
+  HrOffersRoute: HrOffersRoute,
+  HrVacanciesRoute: HrVacanciesRoute,
+  HrVerificationRoute: HrVerificationRoute,
+  HrWorkforceRequestsRoute: HrWorkforceRequestsRoute,
+  HrIndexRoute: HrIndexRoute,
+}
+
+const HrRouteWithChildren = HrRoute._addFileChildren(HrRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  HrRoute: HrRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
