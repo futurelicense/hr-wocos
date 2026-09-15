@@ -82,7 +82,7 @@ function TimesheetsPage() {
                   <span className="data-cell text-[10px] text-mute">0{i + 1}</span>
                   {row[0]}
                 </span>
-                <StatusBadge status={row[1]} />
+                <StatusBadge status={row[1]!} />
               </li>
             ))}
           </ol>
