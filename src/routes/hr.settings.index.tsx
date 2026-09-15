@@ -8,8 +8,8 @@ import {
   StatTile,
   StatusBadge,
 } from "@/components/hr/primitives";
-import { configurableItems, roles } from "@/lib/hr/nav";
-import { lifecycle } from "@/lib/hr/data";
+import { roles } from "@/lib/hr/nav";
+import { configurableItems, lifecycle } from "@/lib/hr/data";
 
 export const Route = createFileRoute("/hr/settings/")({
   head: () => ({

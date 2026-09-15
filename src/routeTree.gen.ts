@@ -33,6 +33,8 @@ import { Route as HrTimesheetsRouteImport } from './routes/hr.timesheets'
 import { Route as HrVacanciesRouteImport } from './routes/hr.vacancies'
 import { Route as HrVerificationRouteImport } from './routes/hr.verification'
 import { Route as HrWorkforceRequestsRouteImport } from './routes/hr.workforce-requests'
+import { Route as HrSettingsIndexRouteImport } from './routes/hr.settings.index'
+import { Route as HrSettingsWorkflowsRouteImport } from './routes/hr.settings.workflows'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -154,6 +156,16 @@ const HrWorkforceRequestsRoute = HrWorkforceRequestsRouteImport.update({
   path: '/workforce-requests',
   getParentRoute: () => HrRoute,
 } as any)
+const HrSettingsIndexRoute = HrSettingsIndexRouteImport.update({
+  id: '/settings/',
+  path: '/settings/',
+  getParentRoute: () => HrRoute,
+} as any)
+const HrSettingsWorkflowsRoute = HrSettingsWorkflowsRouteImport.update({
+  id: '/settings/workflows',
+  path: '/settings/workflows',
+  getParentRoute: () => HrRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -180,6 +192,8 @@ export interface FileRoutesByFullPath {
   '/hr/verification': typeof HrVerificationRoute
   '/hr/workforce-requests': typeof HrWorkforceRequestsRoute
   '/hr/': typeof HrIndexRoute
+  '/hr/settings/workflows': typeof HrSettingsWorkflowsRoute
+  '/hr/settings/': typeof HrSettingsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -205,6 +219,8 @@ export interface FileRoutesByTo {
   '/hr/verification': typeof HrVerificationRoute
   '/hr/workforce-requests': typeof HrWorkforceRequestsRoute
   '/hr': typeof HrIndexRoute
+  '/hr/settings/workflows': typeof HrSettingsWorkflowsRoute
+  '/hr/settings': typeof HrSettingsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -232,6 +248,8 @@ export interface FileRoutesById {
   '/hr/verification': typeof HrVerificationRoute
   '/hr/workforce-requests': typeof HrWorkforceRequestsRoute
   '/hr/': typeof HrIndexRoute
+  '/hr/settings/workflows': typeof HrSettingsWorkflowsRoute
+  '/hr/settings/': typeof HrSettingsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -260,6 +278,8 @@ export interface FileRouteTypes {
     | '/hr/verification'
     | '/hr/workforce-requests'
     | '/hr/'
+    | '/hr/settings/workflows'
+    | '/hr/settings/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -285,6 +305,8 @@ export interface FileRouteTypes {
     | '/hr/verification'
     | '/hr/workforce-requests'
     | '/hr'
+    | '/hr/settings/workflows'
+    | '/hr/settings'
   id:
     | '__root__'
     | '/'
@@ -311,6 +333,8 @@ export interface FileRouteTypes {
     | '/hr/verification'
     | '/hr/workforce-requests'
     | '/hr/'
+    | '/hr/settings/workflows'
+    | '/hr/settings/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -488,6 +512,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HrWorkforceRequestsRouteImport
       parentRoute: typeof HrRoute
     }
+    '/hr/settings/': {
+      id: '/hr/settings/'
+      path: '/settings'
+      fullPath: '/hr/settings/'
+      preLoaderRoute: typeof HrSettingsIndexRouteImport
+      parentRoute: typeof HrRoute
+    }
+    '/hr/settings/workflows': {
+      id: '/hr/settings/workflows'
+      path: '/settings/workflows'
+      fullPath: '/hr/settings/workflows'
+      preLoaderRoute: typeof HrSettingsWorkflowsRouteImport
+      parentRoute: typeof HrRoute
+    }
   }
 }
 
@@ -514,6 +552,8 @@ interface HrRouteChildren {
   HrVerificationRoute: typeof HrVerificationRoute
   HrWorkforceRequestsRoute: typeof HrWorkforceRequestsRoute
   HrIndexRoute: typeof HrIndexRoute
+  HrSettingsWorkflowsRoute: typeof HrSettingsWorkflowsRoute
+  HrSettingsIndexRoute: typeof HrSettingsIndexRoute
 }
 
 const HrRouteChildren: HrRouteChildren = {
@@ -539,6 +579,8 @@ const HrRouteChildren: HrRouteChildren = {
   HrVerificationRoute: HrVerificationRoute,
   HrWorkforceRequestsRoute: HrWorkforceRequestsRoute,
   HrIndexRoute: HrIndexRoute,
+  HrSettingsWorkflowsRoute: HrSettingsWorkflowsRoute,
+  HrSettingsIndexRoute: HrSettingsIndexRoute,
 }
 
 const HrRouteWithChildren = HrRoute._addFileChildren(HrRouteChildren)
