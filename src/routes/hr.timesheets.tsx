@@ -76,13 +76,13 @@ function TimesheetsPage() {
               ["Client supervisor approves", "approved"],
               ["HR review", "pending"],
               ["Locked for payroll", "not_started"],
-            ].map(([label, status], i) => (
-              <li key={label} className="flex items-center justify-between gap-3 border-b border-line/60 py-1.5 last:border-0">
+            ].map((row, i) => (
+              <li key={row[0]} className="flex items-center justify-between gap-3 border-b border-line/60 py-1.5 last:border-0">
                 <span className="flex items-center gap-2.5">
                   <span className="data-cell text-[10px] text-mute">0{i + 1}</span>
-                  {label}
+                  {row[0]}
                 </span>
-                <StatusBadge status={status} />
+                <StatusBadge status={row[1]!} />
               </li>
             ))}
           </ol>

@@ -35,7 +35,7 @@ export const Route = createFileRoute("/hr/verification")({
 });
 
 function VerificationPage() {
-  const focus = verificationCases[2];
+  const focus = verificationCases[2]!;
 
   return (
     <>

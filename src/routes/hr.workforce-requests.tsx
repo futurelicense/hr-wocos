@@ -32,7 +32,7 @@ export const Route = createFileRoute("/hr/workforce-requests")({
 });
 
 function WorkforceRequestsPage() {
-  const selected = workforceRequests[1];
+  const selected = workforceRequests[1]!;
 
   return (
     <>

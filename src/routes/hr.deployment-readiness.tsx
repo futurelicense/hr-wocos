@@ -32,7 +32,7 @@ export const Route = createFileRoute("/hr/deployment-readiness")({
 });
 
 function ReadinessPage() {
-  const focus = readinessCases[0];
+  const focus = readinessCases[0]!;
 
   return (
     <>
