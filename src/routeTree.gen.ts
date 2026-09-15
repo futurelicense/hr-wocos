@@ -13,8 +13,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as HrRouteImport } from './routes/hr'
 import { Route as HrIndexRouteImport } from './routes/hr.index'
 import { Route as HrCandidatesRouteImport } from './routes/hr.candidates'
+import { Route as HrDeploymentReadinessRouteImport } from './routes/hr.deployment-readiness'
+import { Route as HrEmployeesRouteImport } from './routes/hr.employees'
 import { Route as HrInterviewsRouteImport } from './routes/hr.interviews'
 import { Route as HrOffersRouteImport } from './routes/hr.offers'
+import { Route as HrOnboardingRouteImport } from './routes/hr.onboarding'
 import { Route as HrVacanciesRouteImport } from './routes/hr.vacancies'
 import { Route as HrVerificationRouteImport } from './routes/hr.verification'
 import { Route as HrWorkforceRequestsRouteImport } from './routes/hr.workforce-requests'
@@ -39,6 +42,16 @@ const HrCandidatesRoute = HrCandidatesRouteImport.update({
   path: '/candidates',
   getParentRoute: () => HrRoute,
 } as any)
+const HrDeploymentReadinessRoute = HrDeploymentReadinessRouteImport.update({
+  id: '/deployment-readiness',
+  path: '/deployment-readiness',
+  getParentRoute: () => HrRoute,
+} as any)
+const HrEmployeesRoute = HrEmployeesRouteImport.update({
+  id: '/employees',
+  path: '/employees',
+  getParentRoute: () => HrRoute,
+} as any)
 const HrInterviewsRoute = HrInterviewsRouteImport.update({
   id: '/interviews',
   path: '/interviews',
@@ -47,6 +60,11 @@ const HrInterviewsRoute = HrInterviewsRouteImport.update({
 const HrOffersRoute = HrOffersRouteImport.update({
   id: '/offers',
   path: '/offers',
+  getParentRoute: () => HrRoute,
+} as any)
+const HrOnboardingRoute = HrOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => HrRoute,
 } as any)
 const HrVacanciesRoute = HrVacanciesRouteImport.update({
@@ -69,8 +87,11 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/hr': typeof HrRouteWithChildren
   '/hr/candidates': typeof HrCandidatesRoute
+  '/hr/deployment-readiness': typeof HrDeploymentReadinessRoute
+  '/hr/employees': typeof HrEmployeesRoute
   '/hr/interviews': typeof HrInterviewsRoute
   '/hr/offers': typeof HrOffersRoute
+  '/hr/onboarding': typeof HrOnboardingRoute
   '/hr/vacancies': typeof HrVacanciesRoute
   '/hr/verification': typeof HrVerificationRoute
   '/hr/workforce-requests': typeof HrWorkforceRequestsRoute
@@ -79,8 +100,11 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/hr/candidates': typeof HrCandidatesRoute
+  '/hr/deployment-readiness': typeof HrDeploymentReadinessRoute
+  '/hr/employees': typeof HrEmployeesRoute
   '/hr/interviews': typeof HrInterviewsRoute
   '/hr/offers': typeof HrOffersRoute
+  '/hr/onboarding': typeof HrOnboardingRoute
   '/hr/vacancies': typeof HrVacanciesRoute
   '/hr/verification': typeof HrVerificationRoute
   '/hr/workforce-requests': typeof HrWorkforceRequestsRoute
@@ -91,8 +115,11 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/hr': typeof HrRouteWithChildren
   '/hr/candidates': typeof HrCandidatesRoute
+  '/hr/deployment-readiness': typeof HrDeploymentReadinessRoute
+  '/hr/employees': typeof HrEmployeesRoute
   '/hr/interviews': typeof HrInterviewsRoute
   '/hr/offers': typeof HrOffersRoute
+  '/hr/onboarding': typeof HrOnboardingRoute
   '/hr/vacancies': typeof HrVacanciesRoute
   '/hr/verification': typeof HrVerificationRoute
   '/hr/workforce-requests': typeof HrWorkforceRequestsRoute
@@ -104,8 +131,11 @@ export interface FileRouteTypes {
     | '/'
     | '/hr'
     | '/hr/candidates'
+    | '/hr/deployment-readiness'
+    | '/hr/employees'
     | '/hr/interviews'
     | '/hr/offers'
+    | '/hr/onboarding'
     | '/hr/vacancies'
     | '/hr/verification'
     | '/hr/workforce-requests'
@@ -114,8 +144,11 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/hr/candidates'
+    | '/hr/deployment-readiness'
+    | '/hr/employees'
     | '/hr/interviews'
     | '/hr/offers'
+    | '/hr/onboarding'
     | '/hr/vacancies'
     | '/hr/verification'
     | '/hr/workforce-requests'
@@ -125,8 +158,11 @@ export interface FileRouteTypes {
     | '/'
     | '/hr'
     | '/hr/candidates'
+    | '/hr/deployment-readiness'
+    | '/hr/employees'
     | '/hr/interviews'
     | '/hr/offers'
+    | '/hr/onboarding'
     | '/hr/vacancies'
     | '/hr/verification'
     | '/hr/workforce-requests'
@@ -168,6 +204,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HrCandidatesRouteImport
       parentRoute: typeof HrRoute
     }
+    '/hr/deployment-readiness': {
+      id: '/hr/deployment-readiness'
+      path: '/deployment-readiness'
+      fullPath: '/hr/deployment-readiness'
+      preLoaderRoute: typeof HrDeploymentReadinessRouteImport
+      parentRoute: typeof HrRoute
+    }
+    '/hr/employees': {
+      id: '/hr/employees'
+      path: '/employees'
+      fullPath: '/hr/employees'
+      preLoaderRoute: typeof HrEmployeesRouteImport
+      parentRoute: typeof HrRoute
+    }
     '/hr/interviews': {
       id: '/hr/interviews'
       path: '/interviews'
@@ -180,6 +230,13 @@ declare module '@tanstack/react-router' {
       path: '/offers'
       fullPath: '/hr/offers'
       preLoaderRoute: typeof HrOffersRouteImport
+      parentRoute: typeof HrRoute
+    }
+    '/hr/onboarding': {
+      id: '/hr/onboarding'
+      path: '/onboarding'
+      fullPath: '/hr/onboarding'
+      preLoaderRoute: typeof HrOnboardingRouteImport
       parentRoute: typeof HrRoute
     }
     '/hr/vacancies': {
@@ -208,8 +265,11 @@ declare module '@tanstack/react-router' {
 
 interface HrRouteChildren {
   HrCandidatesRoute: typeof HrCandidatesRoute
+  HrDeploymentReadinessRoute: typeof HrDeploymentReadinessRoute
+  HrEmployeesRoute: typeof HrEmployeesRoute
   HrInterviewsRoute: typeof HrInterviewsRoute
   HrOffersRoute: typeof HrOffersRoute
+  HrOnboardingRoute: typeof HrOnboardingRoute
   HrVacanciesRoute: typeof HrVacanciesRoute
   HrVerificationRoute: typeof HrVerificationRoute
   HrWorkforceRequestsRoute: typeof HrWorkforceRequestsRoute
@@ -218,8 +278,11 @@ interface HrRouteChildren {
 
 const HrRouteChildren: HrRouteChildren = {
   HrCandidatesRoute: HrCandidatesRoute,
+  HrDeploymentReadinessRoute: HrDeploymentReadinessRoute,
+  HrEmployeesRoute: HrEmployeesRoute,
   HrInterviewsRoute: HrInterviewsRoute,
   HrOffersRoute: HrOffersRoute,
+  HrOnboardingRoute: HrOnboardingRoute,
   HrVacanciesRoute: HrVacanciesRoute,
   HrVerificationRoute: HrVerificationRoute,
   HrWorkforceRequestsRoute: HrWorkforceRequestsRoute,
