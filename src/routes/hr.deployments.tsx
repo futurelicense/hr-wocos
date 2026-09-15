@@ -30,7 +30,7 @@ export const Route = createFileRoute("/hr/deployments")({
 });
 
 function DeploymentsPage() {
-  const focus = deployments[1];
+  const focus = deployments[1]!;
 
   return (
     <>

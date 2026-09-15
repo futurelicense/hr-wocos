@@ -46,8 +46,8 @@ export const Route = createFileRoute("/hr/sonia")({
 
 function SoniaPage() {
   const [messages, setMessages] = useState<Message[]>([
-    { role: "sonia", text: soniaBrief[0] },
-    { role: "sonia", text: soniaBrief[2] },
+    { role: "sonia", text: soniaBrief[0]! },
+    { role: "sonia", text: soniaBrief[2]! },
   ]);
   const [draft, setDraft] = useState("");
 

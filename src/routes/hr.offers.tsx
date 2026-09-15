@@ -30,7 +30,7 @@ export const Route = createFileRoute("/hr/offers")({
 });
 
 function OffersPage() {
-  const focus = offers[0];
+  const focus = offers[0]!;
 
   return (
     <>

@@ -32,7 +32,7 @@ export const Route = createFileRoute("/hr/candidates")({
 });
 
 function CandidatesPage() {
-  const focus = candidates[0];
+  const focus = candidates[0]!;
 
   return (
     <>

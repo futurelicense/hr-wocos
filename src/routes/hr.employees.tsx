@@ -32,7 +32,7 @@ export const Route = createFileRoute("/hr/employees")({
 });
 
 function EmployeesPage() {
-  const focus = employees[0];
+  const focus = employees[0]!;
 
   return (
     <>
