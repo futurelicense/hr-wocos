@@ -22,7 +22,7 @@ export function HrShell() {
 
   useEffect(() => {
     if (!session) {
-      void navigate({ to: "/login" });
+      void navigate({ to: "/login", replace: true });
     }
   }, [session, navigate]);
 

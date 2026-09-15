@@ -36,7 +36,7 @@ function LoginPage() {
 
   useEffect(() => {
     if (session) {
-      void navigate({ to: "/hr" });
+      void navigate({ to: "/hr", replace: true });
     }
   }, [session, navigate]);
 

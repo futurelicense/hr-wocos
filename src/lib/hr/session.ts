@@ -11,6 +11,10 @@ export type SessionUser = {
 
 const SESSION_KEY = "wocos_hr_session";
 
+/** Cached snapshot so useSyncExternalStore getSnapshot stays referentially stable. */
+let cachedRaw: string | null | undefined;
+let cachedSession: SessionUser | null = null;
+
 export const demoUsersByRole: Record<string, { name: string; email: string }> = {
   hr_admin: { name: "Ada Okonkwo", email: "ada.okonkwo@teamace.com" },
   recruiter: { name: "Chidi Eze", email: "chidi.eze@teamace.com" },
@@ -49,10 +53,7 @@ function storage(remember: boolean) {
   return remember ? window.localStorage : window.sessionStorage;
 }
 
-export function readSession(): SessionUser | null {
-  if (typeof window === "undefined") return null;
-  const raw =
-    window.localStorage.getItem(SESSION_KEY) ?? window.sessionStorage.getItem(SESSION_KEY);
+function parseSession(raw: string | null): SessionUser | null {
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as SessionUser;
@@ -63,17 +64,37 @@ export function readSession(): SessionUser | null {
   }
 }
 
+function readRaw(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(SESSION_KEY) ?? window.sessionStorage.getItem(SESSION_KEY);
+}
+
+function refreshCache(raw: string | null = readRaw()) {
+  if (raw === cachedRaw) return cachedSession;
+  cachedRaw = raw;
+  cachedSession = parseSession(raw);
+  return cachedSession;
+}
+
+export function readSession(): SessionUser | null {
+  if (typeof window === "undefined") return null;
+  return refreshCache();
+}
+
 export function writeSession(user: SessionUser) {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(SESSION_KEY);
   window.sessionStorage.removeItem(SESSION_KEY);
-  storage(user.remember)?.setItem(SESSION_KEY, JSON.stringify(user));
+  const raw = JSON.stringify(user);
+  storage(user.remember)?.setItem(SESSION_KEY, raw);
+  refreshCache(raw);
 }
 
 export function clearSession() {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(SESSION_KEY);
   window.sessionStorage.removeItem(SESSION_KEY);
+  refreshCache(null);
 }
 
 export function buildSession(input: {
