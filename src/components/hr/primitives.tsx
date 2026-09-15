@@ -248,13 +248,15 @@ export function ColumnChart({
 }) {
   const max = Math.max(...items.map((i) => i.value), 1);
   return (
-    <div className={cn("flex items-end gap-2", height)}>
+    <div className={cn("flex items-stretch gap-2", height)}>
       {items.map((item) => (
-        <div key={item.label} className="flex flex-1 flex-col items-center gap-1.5">
-          <div
-            className={cn("w-full rounded-t-[4px]", toneBar[item.tone ?? "info"])}
-            style={{ height: `${Math.max((item.value / max) * 100, 4)}%` }}
-          />
+        <div key={item.label} className="flex h-full flex-1 flex-col items-center gap-1.5">
+          <div className="flex w-full flex-1 items-end">
+            <div
+              className={cn("animate-latch w-full rounded-t-[4px]", toneBar[item.tone ?? "info"])}
+              style={{ height: `${Math.max((item.value / max) * 100, 4)}%` }}
+            />
+          </div>
           <span className="font-mono text-[10px] text-fg">{item.value}</span>
           <span className="font-mono text-[8px] tracking-wide text-mute uppercase">{item.label}</span>
         </div>
