@@ -12,11 +12,14 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as HrRouteImport } from './routes/hr'
 import { Route as HrIndexRouteImport } from './routes/hr.index'
+import { Route as HrAnalyticsRouteImport } from './routes/hr.analytics'
 import { Route as HrAttendanceRouteImport } from './routes/hr.attendance'
 import { Route as HrCandidatesRouteImport } from './routes/hr.candidates'
+import { Route as HrClientPortalRouteImport } from './routes/hr.client-portal'
 import { Route as HrComplianceRouteImport } from './routes/hr.compliance'
 import { Route as HrDeploymentReadinessRouteImport } from './routes/hr.deployment-readiness'
 import { Route as HrDeploymentsRouteImport } from './routes/hr.deployments'
+import { Route as HrEmployeePortalRouteImport } from './routes/hr.employee-portal'
 import { Route as HrEmployeesRouteImport } from './routes/hr.employees'
 import { Route as HrInterviewsRouteImport } from './routes/hr.interviews'
 import { Route as HrLeaveRouteImport } from './routes/hr.leave'
@@ -25,6 +28,7 @@ import { Route as HrOnboardingRouteImport } from './routes/hr.onboarding'
 import { Route as HrPayrollRouteImport } from './routes/hr.payroll'
 import { Route as HrPerformanceRouteImport } from './routes/hr.performance'
 import { Route as HrServiceDeskRouteImport } from './routes/hr.service-desk'
+import { Route as HrSoniaRouteImport } from './routes/hr.sonia'
 import { Route as HrTimesheetsRouteImport } from './routes/hr.timesheets'
 import { Route as HrVacanciesRouteImport } from './routes/hr.vacancies'
 import { Route as HrVerificationRouteImport } from './routes/hr.verification'
@@ -45,6 +49,11 @@ const HrIndexRoute = HrIndexRouteImport.update({
   path: '/',
   getParentRoute: () => HrRoute,
 } as any)
+const HrAnalyticsRoute = HrAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => HrRoute,
+} as any)
 const HrAttendanceRoute = HrAttendanceRouteImport.update({
   id: '/attendance',
   path: '/attendance',
@@ -53,6 +62,11 @@ const HrAttendanceRoute = HrAttendanceRouteImport.update({
 const HrCandidatesRoute = HrCandidatesRouteImport.update({
   id: '/candidates',
   path: '/candidates',
+  getParentRoute: () => HrRoute,
+} as any)
+const HrClientPortalRoute = HrClientPortalRouteImport.update({
+  id: '/client-portal',
+  path: '/client-portal',
   getParentRoute: () => HrRoute,
 } as any)
 const HrComplianceRoute = HrComplianceRouteImport.update({
@@ -68,6 +82,11 @@ const HrDeploymentReadinessRoute = HrDeploymentReadinessRouteImport.update({
 const HrDeploymentsRoute = HrDeploymentsRouteImport.update({
   id: '/deployments',
   path: '/deployments',
+  getParentRoute: () => HrRoute,
+} as any)
+const HrEmployeePortalRoute = HrEmployeePortalRouteImport.update({
+  id: '/employee-portal',
+  path: '/employee-portal',
   getParentRoute: () => HrRoute,
 } as any)
 const HrEmployeesRoute = HrEmployeesRouteImport.update({
@@ -110,6 +129,11 @@ const HrServiceDeskRoute = HrServiceDeskRouteImport.update({
   path: '/service-desk',
   getParentRoute: () => HrRoute,
 } as any)
+const HrSoniaRoute = HrSoniaRouteImport.update({
+  id: '/sonia',
+  path: '/sonia',
+  getParentRoute: () => HrRoute,
+} as any)
 const HrTimesheetsRoute = HrTimesheetsRouteImport.update({
   id: '/timesheets',
   path: '/timesheets',
@@ -134,11 +158,14 @@ const HrWorkforceRequestsRoute = HrWorkforceRequestsRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/hr': typeof HrRouteWithChildren
+  '/hr/analytics': typeof HrAnalyticsRoute
   '/hr/attendance': typeof HrAttendanceRoute
   '/hr/candidates': typeof HrCandidatesRoute
+  '/hr/client-portal': typeof HrClientPortalRoute
   '/hr/compliance': typeof HrComplianceRoute
   '/hr/deployment-readiness': typeof HrDeploymentReadinessRoute
   '/hr/deployments': typeof HrDeploymentsRoute
+  '/hr/employee-portal': typeof HrEmployeePortalRoute
   '/hr/employees': typeof HrEmployeesRoute
   '/hr/interviews': typeof HrInterviewsRoute
   '/hr/leave': typeof HrLeaveRoute
@@ -147,6 +174,7 @@ export interface FileRoutesByFullPath {
   '/hr/payroll': typeof HrPayrollRoute
   '/hr/performance': typeof HrPerformanceRoute
   '/hr/service-desk': typeof HrServiceDeskRoute
+  '/hr/sonia': typeof HrSoniaRoute
   '/hr/timesheets': typeof HrTimesheetsRoute
   '/hr/vacancies': typeof HrVacanciesRoute
   '/hr/verification': typeof HrVerificationRoute
@@ -155,11 +183,14 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/hr/analytics': typeof HrAnalyticsRoute
   '/hr/attendance': typeof HrAttendanceRoute
   '/hr/candidates': typeof HrCandidatesRoute
+  '/hr/client-portal': typeof HrClientPortalRoute
   '/hr/compliance': typeof HrComplianceRoute
   '/hr/deployment-readiness': typeof HrDeploymentReadinessRoute
   '/hr/deployments': typeof HrDeploymentsRoute
+  '/hr/employee-portal': typeof HrEmployeePortalRoute
   '/hr/employees': typeof HrEmployeesRoute
   '/hr/interviews': typeof HrInterviewsRoute
   '/hr/leave': typeof HrLeaveRoute
@@ -168,6 +199,7 @@ export interface FileRoutesByTo {
   '/hr/payroll': typeof HrPayrollRoute
   '/hr/performance': typeof HrPerformanceRoute
   '/hr/service-desk': typeof HrServiceDeskRoute
+  '/hr/sonia': typeof HrSoniaRoute
   '/hr/timesheets': typeof HrTimesheetsRoute
   '/hr/vacancies': typeof HrVacanciesRoute
   '/hr/verification': typeof HrVerificationRoute
@@ -178,11 +210,14 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/hr': typeof HrRouteWithChildren
+  '/hr/analytics': typeof HrAnalyticsRoute
   '/hr/attendance': typeof HrAttendanceRoute
   '/hr/candidates': typeof HrCandidatesRoute
+  '/hr/client-portal': typeof HrClientPortalRoute
   '/hr/compliance': typeof HrComplianceRoute
   '/hr/deployment-readiness': typeof HrDeploymentReadinessRoute
   '/hr/deployments': typeof HrDeploymentsRoute
+  '/hr/employee-portal': typeof HrEmployeePortalRoute
   '/hr/employees': typeof HrEmployeesRoute
   '/hr/interviews': typeof HrInterviewsRoute
   '/hr/leave': typeof HrLeaveRoute
@@ -191,6 +226,7 @@ export interface FileRoutesById {
   '/hr/payroll': typeof HrPayrollRoute
   '/hr/performance': typeof HrPerformanceRoute
   '/hr/service-desk': typeof HrServiceDeskRoute
+  '/hr/sonia': typeof HrSoniaRoute
   '/hr/timesheets': typeof HrTimesheetsRoute
   '/hr/vacancies': typeof HrVacanciesRoute
   '/hr/verification': typeof HrVerificationRoute
@@ -202,11 +238,14 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/hr'
+    | '/hr/analytics'
     | '/hr/attendance'
     | '/hr/candidates'
+    | '/hr/client-portal'
     | '/hr/compliance'
     | '/hr/deployment-readiness'
     | '/hr/deployments'
+    | '/hr/employee-portal'
     | '/hr/employees'
     | '/hr/interviews'
     | '/hr/leave'
@@ -215,6 +254,7 @@ export interface FileRouteTypes {
     | '/hr/payroll'
     | '/hr/performance'
     | '/hr/service-desk'
+    | '/hr/sonia'
     | '/hr/timesheets'
     | '/hr/vacancies'
     | '/hr/verification'
@@ -223,11 +263,14 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/hr/analytics'
     | '/hr/attendance'
     | '/hr/candidates'
+    | '/hr/client-portal'
     | '/hr/compliance'
     | '/hr/deployment-readiness'
     | '/hr/deployments'
+    | '/hr/employee-portal'
     | '/hr/employees'
     | '/hr/interviews'
     | '/hr/leave'
@@ -236,6 +279,7 @@ export interface FileRouteTypes {
     | '/hr/payroll'
     | '/hr/performance'
     | '/hr/service-desk'
+    | '/hr/sonia'
     | '/hr/timesheets'
     | '/hr/vacancies'
     | '/hr/verification'
@@ -245,11 +289,14 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/hr'
+    | '/hr/analytics'
     | '/hr/attendance'
     | '/hr/candidates'
+    | '/hr/client-portal'
     | '/hr/compliance'
     | '/hr/deployment-readiness'
     | '/hr/deployments'
+    | '/hr/employee-portal'
     | '/hr/employees'
     | '/hr/interviews'
     | '/hr/leave'
@@ -258,6 +305,7 @@ export interface FileRouteTypes {
     | '/hr/payroll'
     | '/hr/performance'
     | '/hr/service-desk'
+    | '/hr/sonia'
     | '/hr/timesheets'
     | '/hr/vacancies'
     | '/hr/verification'
@@ -293,6 +341,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HrIndexRouteImport
       parentRoute: typeof HrRoute
     }
+    '/hr/analytics': {
+      id: '/hr/analytics'
+      path: '/analytics'
+      fullPath: '/hr/analytics'
+      preLoaderRoute: typeof HrAnalyticsRouteImport
+      parentRoute: typeof HrRoute
+    }
     '/hr/attendance': {
       id: '/hr/attendance'
       path: '/attendance'
@@ -305,6 +360,13 @@ declare module '@tanstack/react-router' {
       path: '/candidates'
       fullPath: '/hr/candidates'
       preLoaderRoute: typeof HrCandidatesRouteImport
+      parentRoute: typeof HrRoute
+    }
+    '/hr/client-portal': {
+      id: '/hr/client-portal'
+      path: '/client-portal'
+      fullPath: '/hr/client-portal'
+      preLoaderRoute: typeof HrClientPortalRouteImport
       parentRoute: typeof HrRoute
     }
     '/hr/compliance': {
@@ -326,6 +388,13 @@ declare module '@tanstack/react-router' {
       path: '/deployments'
       fullPath: '/hr/deployments'
       preLoaderRoute: typeof HrDeploymentsRouteImport
+      parentRoute: typeof HrRoute
+    }
+    '/hr/employee-portal': {
+      id: '/hr/employee-portal'
+      path: '/employee-portal'
+      fullPath: '/hr/employee-portal'
+      preLoaderRoute: typeof HrEmployeePortalRouteImport
       parentRoute: typeof HrRoute
     }
     '/hr/employees': {
@@ -384,6 +453,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HrServiceDeskRouteImport
       parentRoute: typeof HrRoute
     }
+    '/hr/sonia': {
+      id: '/hr/sonia'
+      path: '/sonia'
+      fullPath: '/hr/sonia'
+      preLoaderRoute: typeof HrSoniaRouteImport
+      parentRoute: typeof HrRoute
+    }
     '/hr/timesheets': {
       id: '/hr/timesheets'
       path: '/timesheets'
@@ -416,11 +492,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface HrRouteChildren {
+  HrAnalyticsRoute: typeof HrAnalyticsRoute
   HrAttendanceRoute: typeof HrAttendanceRoute
   HrCandidatesRoute: typeof HrCandidatesRoute
+  HrClientPortalRoute: typeof HrClientPortalRoute
   HrComplianceRoute: typeof HrComplianceRoute
   HrDeploymentReadinessRoute: typeof HrDeploymentReadinessRoute
   HrDeploymentsRoute: typeof HrDeploymentsRoute
+  HrEmployeePortalRoute: typeof HrEmployeePortalRoute
   HrEmployeesRoute: typeof HrEmployeesRoute
   HrInterviewsRoute: typeof HrInterviewsRoute
   HrLeaveRoute: typeof HrLeaveRoute
@@ -429,6 +508,7 @@ interface HrRouteChildren {
   HrPayrollRoute: typeof HrPayrollRoute
   HrPerformanceRoute: typeof HrPerformanceRoute
   HrServiceDeskRoute: typeof HrServiceDeskRoute
+  HrSoniaRoute: typeof HrSoniaRoute
   HrTimesheetsRoute: typeof HrTimesheetsRoute
   HrVacanciesRoute: typeof HrVacanciesRoute
   HrVerificationRoute: typeof HrVerificationRoute
@@ -437,11 +517,14 @@ interface HrRouteChildren {
 }
 
 const HrRouteChildren: HrRouteChildren = {
+  HrAnalyticsRoute: HrAnalyticsRoute,
   HrAttendanceRoute: HrAttendanceRoute,
   HrCandidatesRoute: HrCandidatesRoute,
+  HrClientPortalRoute: HrClientPortalRoute,
   HrComplianceRoute: HrComplianceRoute,
   HrDeploymentReadinessRoute: HrDeploymentReadinessRoute,
   HrDeploymentsRoute: HrDeploymentsRoute,
+  HrEmployeePortalRoute: HrEmployeePortalRoute,
   HrEmployeesRoute: HrEmployeesRoute,
   HrInterviewsRoute: HrInterviewsRoute,
   HrLeaveRoute: HrLeaveRoute,
@@ -450,6 +533,7 @@ const HrRouteChildren: HrRouteChildren = {
   HrPayrollRoute: HrPayrollRoute,
   HrPerformanceRoute: HrPerformanceRoute,
   HrServiceDeskRoute: HrServiceDeskRoute,
+  HrSoniaRoute: HrSoniaRoute,
   HrTimesheetsRoute: HrTimesheetsRoute,
   HrVacanciesRoute: HrVacanciesRoute,
   HrVerificationRoute: HrVerificationRoute,
