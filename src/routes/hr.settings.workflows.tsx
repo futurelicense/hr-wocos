@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { toast } from "sonner";
 import {
   ConsoleButton,
   DataTable,
@@ -8,7 +10,11 @@ import {
   StatTile,
   StatusBadge,
 } from "@/components/hr/primitives";
-import { automationTriggers, candidatePipeline, readinessRequirements } from "@/lib/hr/data";
+import {
+  automationTriggers as initialAutomationTriggers,
+  candidatePipeline,
+  readinessRequirements,
+} from "@/lib/hr/data";
 import { labelize } from "@/lib/hr/status";
 
 const approvalChains = [
@@ -30,13 +36,32 @@ export const Route = createFileRoute("/hr/settings/workflows")({
           "Configure pipeline stages, deployment requirements, approval chains and the eleven automation triggers that move the workforce lifecycle forward.",
       },
       { property: "og:title", content: "Workflow Configuration — WoCOS HR" },
-      { property: "og:description", content: "Stages, approval chains and lifecycle automation triggers." },
+      {
+        property: "og:description",
+        content: "Stages, approval chains and lifecycle automation triggers.",
+      },
     ],
   }),
   component: WorkflowsPage,
 });
 
 function WorkflowsPage() {
+  const [triggers, setTriggers] = useState(initialAutomationTriggers);
+  const underReview = triggers.filter((t) => t.status === "under_review").length;
+
+  function publish() {
+    if (underReview === 0) {
+      toast.info("Nothing pending — workflow already published");
+      return;
+    }
+    setTriggers((prev) =>
+      prev.map((t) => (t.status === "under_review" ? { ...t, status: "active" } : t)),
+    );
+    toast.success(
+      `Workflow published — ${underReview} trigger${underReview === 1 ? "" : "s"} activated`,
+    );
+  }
+
   return (
     <>
       <PageHeader
@@ -51,13 +76,20 @@ function WorkflowsPage() {
             >
               HR Settings
             </Link>
-            <ConsoleButton variant="primary">Publish Workflow</ConsoleButton>
+            <ConsoleButton variant="primary" onClick={publish}>
+              Publish Workflow
+            </ConsoleButton>
           </>
         }
       />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatTile label="Automation Triggers" value={11} note="1 under review" tone="success" />
+        <StatTile
+          label="Automation Triggers"
+          value={11}
+          note={`${underReview} under review`}
+          tone="success"
+        />
         <StatTile label="Approval Chains" value={6} note="client-aware" tone="info" />
         <StatTile label="Pipeline Stages" value={10} note="2 client gates" tone="info" />
         <StatTile label="Readiness Rules" value={11} note="all must complete" tone="warning" />
@@ -66,7 +98,7 @@ function WorkflowsPage() {
       <Panel title="Automation Triggers" meta="event → action">
         <DataTable
           columns={["Event", "Action", "State"]}
-          rows={automationTriggers.map((t) => [
+          rows={triggers.map((t) => [
             <span className="text-fg">{labelize(t.event)}</span>,
             <span className="text-dim">{labelize(t.action)}</span>,
             <StatusBadge status={t.status} />,
@@ -83,7 +115,9 @@ function WorkflowsPage() {
                 className="flex items-center justify-between gap-3 rounded-md bg-panel2 px-2.5 py-1.5 text-[12.5px] ring-1 ring-line"
               >
                 <span className="flex items-center gap-2.5">
-                  <span className="data-cell text-[10px] text-mute">{String(i + 1).padStart(2, "0")}</span>
+                  <span className="data-cell text-[10px] text-mute">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
                   {labelize(s)}
                 </span>
                 {s === "client_review" ? <StatusBadge status="client_gate" tone="info" /> : null}
@@ -99,7 +133,9 @@ function WorkflowsPage() {
                 key={r}
                 className="flex items-center gap-2.5 rounded-md bg-panel2 px-2.5 py-1.5 text-[12.5px] ring-1 ring-line"
               >
-                <span className="data-cell text-[10px] text-mute">{String(i + 1).padStart(2, "0")}</span>
+                <span className="data-cell text-[10px] text-mute">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
                 <span className="truncate">{labelize(r)}</span>
               </li>
             ))}

@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { toast } from "sonner";
 import {
   Checklist,
   ConsoleButton,
@@ -15,6 +17,8 @@ import { labelize } from "@/lib/hr/status";
 
 const columns = ["not_cleared", "pending_requirements", "ready_for_deployment", "deployed"];
 
+type ReadinessCase = (typeof readinessCases)[number];
+
 export const Route = createFileRoute("/hr/deployment-readiness")({
   head: () => ({
     meta: [
@@ -25,14 +29,56 @@ export const Route = createFileRoute("/hr/deployment-readiness")({
           "Eleven required clearances decide readiness. When all are complete a candidate is marked ready for deployment and can be activated as an employee.",
       },
       { property: "og:title", content: "Deployment Readiness — WoCOS HR" },
-      { property: "og:description", content: "Eleven gates between onboarding and employee activation." },
+      {
+        property: "og:description",
+        content: "Eleven gates between onboarding and employee activation.",
+      },
     ],
   }),
   component: ReadinessPage,
 });
 
 function ReadinessPage() {
-  const focus = readinessCases[0]!;
+  const [cases, setCases] = useState<ReadinessCase[]>(() => readinessCases);
+  const [focusCandidate, setFocusCandidate] = useState(readinessCases[0]!.candidate);
+  const focus = cases.find((c) => c.candidate === focusCandidate) ?? cases[0];
+
+  const activate = (candidate: string) => {
+    const target = cases.find((c) => c.candidate === candidate);
+    if (!target) return;
+    if (target.met.length < readinessRequirements.length) {
+      toast.error("Cannot activate yet", {
+        description: `${target.candidate} is missing ${readinessRequirements.length - target.met.length} requirement(s).`,
+      });
+      return;
+    }
+    setCases((prev) => {
+      const next = prev.filter((c) => c.candidate !== candidate);
+      setFocusCandidate(next[0]?.candidate ?? "");
+      return next;
+    });
+    toast.success(`${target.candidate} activated as employee`, {
+      description: "Moved to the Employees directory",
+    });
+  };
+
+  const sendReminders = () => {
+    const pending = cases.filter(
+      (c) => c.status !== "ready_for_deployment" && c.status !== "deployed",
+    ).length;
+    toast.success(
+      `Reminders sent for ${pending} candidate${pending === 1 ? "" : "s"} with open requirements`,
+    );
+  };
+
+  const activateReadyEmployee = () => {
+    const nextReady = cases.find((c) => c.status === "ready_for_deployment");
+    if (!nextReady) {
+      toast.info("No candidates are fully cleared for deployment right now");
+      return;
+    }
+    activate(nextReady.candidate);
+  };
 
   return (
     <>
@@ -42,8 +88,10 @@ function ReadinessPage() {
         subtitle="7 cleared for deployment · 11 required clearances per candidate · 2 not cleared"
         actions={
           <>
-            <ConsoleButton>Send reminders</ConsoleButton>
-            <ConsoleButton variant="primary">Activate Employee</ConsoleButton>
+            <ConsoleButton onClick={sendReminders}>Send reminders</ConsoleButton>
+            <ConsoleButton variant="primary" onClick={activateReadyEmployee}>
+              Activate Employee
+            </ConsoleButton>
           </>
         }
       />
@@ -58,7 +106,7 @@ function ReadinessPage() {
       <Panel title="Readiness Board" meta="rule: all required items complete" bodyClassName="p-4">
         <div className="grid gap-3 md:grid-cols-4">
           {columns.map((col) => {
-            const items = readinessCases.filter((c) => c.status === col);
+            const items = cases.filter((c) => c.status === col);
             return (
               <div key={col} className="console-inset p-2.5">
                 <div className="mb-2 flex items-center justify-between">
@@ -67,7 +115,16 @@ function ReadinessPage() {
                 </div>
                 <div className="space-y-2">
                   {items.map((c) => (
-                    <article key={c.candidate} className="rounded-md bg-panel p-2.5 ring-1 ring-line">
+                    <button
+                      key={c.candidate}
+                      type="button"
+                      onClick={() => setFocusCandidate(c.candidate)}
+                      className={
+                        c.candidate === focus?.candidate
+                          ? "w-full rounded-md bg-panel p-2.5 text-left ring-1 ring-teal/50"
+                          : "w-full rounded-md bg-panel p-2.5 text-left ring-1 ring-line transition-colors hover:ring-teal/30"
+                      }
+                    >
                       <div className="text-[12px] font-medium text-fg">{c.candidate}</div>
                       <div className="mt-0.5 font-mono text-[9px] text-mute">
                         {c.client} · {c.location}
@@ -75,7 +132,9 @@ function ReadinessPage() {
                       <div className="mt-2">
                         <Progress
                           value={(c.met.length / readinessRequirements.length) * 100}
-                          tone={c.met.length === readinessRequirements.length ? "success" : "warning"}
+                          tone={
+                            c.met.length === readinessRequirements.length ? "success" : "warning"
+                          }
                         />
                       </div>
                       <div className="mt-1.5 flex items-center justify-between font-mono text-[9px] text-mute">
@@ -84,7 +143,7 @@ function ReadinessPage() {
                         </span>
                         <span>{c.start}</span>
                       </div>
-                    </article>
+                    </button>
                   ))}
                   {items.length === 0 ? (
                     <p className="py-3 text-center font-mono text-[10px] text-mute">empty</p>
@@ -96,54 +155,69 @@ function ReadinessPage() {
         </div>
       </Panel>
 
-      <div className="grid gap-3 lg:grid-cols-3">
-        <Panel
-          title={`Readiness Profile · ${focus.candidate}`}
-          meta="11 of 11 complete"
-          action={<StatusBadge status={focus.status} />}
-          className="lg:col-span-2"
-        >
-          <Checklist
-            items={readinessRequirements.map((r) => ({
-              label: labelize(r),
-              status: focus.met.includes(r) ? "completed" : "pending",
-            }))}
-          />
-        </Panel>
+      {focus ? (
+        <div className="grid gap-3 lg:grid-cols-3">
+          <Panel
+            title={`Readiness Profile · ${focus.candidate}`}
+            meta={`${focus.met.length} of ${readinessRequirements.length} complete`}
+            action={<StatusBadge status={focus.status} />}
+            className="lg:col-span-2"
+          >
+            <Checklist
+              items={readinessRequirements.map((r) => ({
+                label: labelize(r),
+                status: focus.met.includes(r) ? "completed" : "pending",
+              }))}
+            />
+          </Panel>
 
-        <Panel title="Employee Activation" bodyClassName="space-y-4 p-4">
-          <KeyValue
-            rows={[
-              { k: "Trigger", v: "Readiness approved" },
-              { k: "Transition", v: "Candidate → Employee" },
-              { k: "Client assignment", v: focus.client },
-              { k: "Deployment location", v: focus.location },
-              { k: "Start date", v: <span className="data-cell text-[11px]">{focus.start}</span> },
-              { k: "Reporting manager", v: "Grace Umeh" },
-            ]}
-          />
-          <div>
-            <div className="console-label mb-2">Activation creates</div>
-            <ul className="space-y-1">
-              {activationCreates.map((c) => (
-                <li key={c} className="flex items-center gap-2 font-mono text-[10px] text-dim">
-                  <span className="size-1.5 rounded-full bg-teal" />
-                  {labelize(c)}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="rounded-md bg-panel2 p-3 ring-1 ring-line">
-            <div className="console-label">Handoff</div>
-            <p className="mt-1.5 text-[12px] leading-relaxed text-dim">
-              WoCOS HR Talent &amp; Onboarding → WoCOS Core + WoCOS HR Workforce Operations.
-            </p>
-          </div>
-          <ConsoleButton variant="primary" className="w-full">
-            Approve Readiness &amp; Activate
-          </ConsoleButton>
+          <Panel title="Employee Activation" bodyClassName="space-y-4 p-4">
+            <KeyValue
+              rows={[
+                { k: "Trigger", v: "Readiness approved" },
+                { k: "Transition", v: "Candidate → Employee" },
+                { k: "Client assignment", v: focus.client },
+                { k: "Deployment location", v: focus.location },
+                {
+                  k: "Start date",
+                  v: <span className="data-cell text-[11px]">{focus.start}</span>,
+                },
+                { k: "Reporting manager", v: "Grace Umeh" },
+              ]}
+            />
+            <div>
+              <div className="console-label mb-2">Activation creates</div>
+              <ul className="space-y-1">
+                {activationCreates.map((c) => (
+                  <li key={c} className="flex items-center gap-2 font-mono text-[10px] text-dim">
+                    <span className="size-1.5 rounded-full bg-teal" />
+                    {labelize(c)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="rounded-md bg-panel2 p-3 ring-1 ring-line">
+              <div className="console-label">Handoff</div>
+              <p className="mt-1.5 text-[12px] leading-relaxed text-dim">
+                WoCOS HR Talent &amp; Onboarding → WoCOS Core + WoCOS HR Workforce Operations.
+              </p>
+            </div>
+            <ConsoleButton
+              variant="primary"
+              className="w-full"
+              onClick={() => activate(focus.candidate)}
+            >
+              Approve Readiness &amp; Activate
+            </ConsoleButton>
+          </Panel>
+        </div>
+      ) : (
+        <Panel title="Employee Activation">
+          <p className="py-6 text-center font-mono text-[11px] text-mute">
+            All candidates on the readiness board have been activated.
+          </p>
         </Panel>
-      </div>
+      )}
 
       <DemoNote />
     </>

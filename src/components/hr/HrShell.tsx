@@ -1,10 +1,47 @@
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { navigation } from "@/lib/hr/nav";
-import { org } from "@/lib/hr/data";
+import { navigation, roles } from "@/lib/hr/nav";
+import { attentionRequired, org, pendingApprovals } from "@/lib/hr/data";
 import { toneClasses } from "@/lib/hr/status";
-import { signOut, useSession } from "@/hooks/use-session";
+import { signIn, signOut, useSession } from "@/hooks/use-session";
+import { buildSession } from "@/lib/hr/session";
+import {
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+type Notification = {
+  id: string;
+  title: string;
+  meta: string;
+  tone: "danger" | "warning" | "info";
+};
+
+const initialNotifications: Notification[] = [
+  ...attentionRequired.map((a, i) => ({
+    id: `attn-${i}`,
+    title: a.title,
+    meta: a.meta,
+    tone: a.tone,
+  })),
+  ...pendingApprovals
+    .filter((a) => a.status === "submitted" || a.status === "awaiting_approval")
+    .map((a, i) => ({ id: `appr-${i}`, title: a.title, meta: a.meta, tone: "info" as const })),
+];
 
 function activeLabel(pathname: string) {
   const all = navigation.flatMap((s) => s.items.map((i) => ({ ...i, section: s.section })));
@@ -19,12 +56,42 @@ export function HrShell() {
   const current = activeLabel(pathname);
   const session = useSession();
   const navigate = useNavigate();
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [notifications, setNotifications] = useState(initialNotifications);
+  const unread = notifications.length;
 
   useEffect(() => {
     if (!session) {
       void navigate({ to: "/login", replace: true });
     }
   }, [session, navigate]);
+
+  useEffect(() => {
+    function onKeydown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setSearchOpen((open) => !open);
+      }
+    }
+    document.addEventListener("keydown", onKeydown);
+    return () => document.removeEventListener("keydown", onKeydown);
+  }, []);
+
+  const goTo = (route: string) => {
+    setSearchOpen(false);
+    void navigate({ to: route });
+  };
+
+  const dismissNotification = (id: string) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  };
+
+  const switchRole = (roleId: string) => {
+    if (!session || roleId === session.roleId) return;
+    const next = buildSession({ email: session.email, roleId, remember: session.remember });
+    signIn(next);
+    toast.success(`Switched role to ${next.role}`, { description: next.name });
+  };
 
   if (!session) {
     return (
@@ -42,8 +109,12 @@ export function HrShell() {
             <span className="font-mono text-[12px] font-semibold tracking-tight text-teal">WH</span>
           </span>
           <span className="leading-tight">
-            <span className="font-display block text-[13px] font-semibold tracking-tight">{org.product}</span>
-            <span className="block font-mono text-[9px] tracking-[0.18em] text-mute uppercase">{org.name}</span>
+            <span className="font-display block text-[13px] font-semibold tracking-tight">
+              {org.product}
+            </span>
+            <span className="block font-mono text-[9px] tracking-[0.18em] text-mute uppercase">
+              {org.name}
+            </span>
           </span>
         </Link>
 
@@ -53,7 +124,9 @@ export function HrShell() {
               <div className="console-label px-2 pt-4 pb-1.5 first:pt-2">{section.section}</div>
               {section.items.map((item) => {
                 const isActive =
-                  item.route === "/hr" ? pathname === "/hr" : pathname === item.route || pathname.startsWith(item.route + "/");
+                  item.route === "/hr"
+                    ? pathname === "/hr"
+                    : pathname === item.route || pathname.startsWith(item.route + "/");
                 return (
                   <Link
                     key={item.id}
@@ -120,31 +193,92 @@ export function HrShell() {
         <header className="flex h-14 shrink-0 items-center gap-3 border-b border-line bg-panel/60 px-4 md:px-5">
           <span className="console-label hidden sm:inline">{current.section}</span>
           <span className="hidden text-mute/50 sm:inline">/</span>
-          <span className="font-display truncate text-[15px] font-semibold tracking-tight">{current.label}</span>
+          <span className="font-display truncate text-[15px] font-semibold tracking-tight">
+            {current.label}
+          </span>
           <div className="ml-auto flex items-center gap-2.5">
-            <div className="hidden h-8 w-56 items-center gap-2 rounded-md bg-panel2 px-3 text-[12px] text-mute ring-1 ring-line lg:flex">
-              <span className="font-mono text-[11px]">/</span>
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              className="hidden h-8 w-56 items-center gap-2 rounded-md bg-panel2 px-3 text-[12px] text-mute ring-1 ring-line transition-colors hover:text-fg lg:flex"
+            >
+              <span className="font-mono text-[11px]">⌘K</span>
               <span>Search workforce…</span>
-            </div>
-            <button
-              type="button"
-              className={cn("h-8 rounded-md px-2 font-mono text-[10px] ring-1", toneClasses.info)}
-            >
-              {session.role}
             </button>
-            <button
-              type="button"
-              className="h-8 rounded-md bg-panel2 px-2.5 font-mono text-[11px] font-medium text-dim ring-1 ring-line hover:text-fg"
-            >
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className={cn(
+                    "h-8 rounded-md px-2 font-mono text-[10px] ring-1 transition-opacity hover:opacity-80",
+                    toneClasses.info,
+                  )}
+                >
+                  {session.role}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel className="font-mono text-[10px] tracking-[0.1em] text-mute uppercase">
+                  Switch role (demo)
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {roles.map((r) => (
+                  <DropdownMenuItem key={r.id} onClick={() => switchRole(r.id)}>
+                    {r.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <span className="h-8 content-center rounded-md bg-panel2 px-2.5 font-mono text-[11px] font-medium text-dim ring-1 ring-line">
               {org.today}
-            </button>
-            <button
-              type="button"
-              className="relative grid size-8 place-items-center rounded-md bg-panel2 text-dim ring-1 ring-line hover:text-fg"
-            >
-              <span className="font-mono text-[11px]">◍</span>
-              <span className="absolute top-1 right-1 size-1.5 rounded-full bg-coral" />
-            </button>
+            </span>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="relative grid size-8 place-items-center rounded-md bg-panel2 text-dim ring-1 ring-line transition-colors hover:text-fg"
+                >
+                  <span className="font-mono text-[11px]">◍</span>
+                  {unread > 0 ? (
+                    <span className="absolute top-1 right-1 size-1.5 rounded-full bg-coral" />
+                  ) : null}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-72">
+                <DropdownMenuLabel className="flex items-center justify-between font-mono text-[10px] tracking-[0.1em] text-mute uppercase">
+                  Notifications
+                  {unread > 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => setNotifications([])}
+                      className="normal-case text-teal hover:underline"
+                    >
+                      Mark all read
+                    </button>
+                  ) : null}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {notifications.length === 0 ? (
+                  <div className="px-2 py-3 text-center font-mono text-[11px] text-mute">
+                    You're all caught up
+                  </div>
+                ) : (
+                  notifications.map((n) => (
+                    <DropdownMenuItem
+                      key={n.id}
+                      onClick={() => dismissNotification(n.id)}
+                      className="flex-col items-start gap-0.5 whitespace-normal"
+                    >
+                      <span className="text-[12px] text-fg">{n.title}</span>
+                      <span className="font-mono text-[10px] text-mute">{n.meta}</span>
+                    </DropdownMenuItem>
+                  ))
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
 
@@ -154,6 +288,22 @@ export function HrShell() {
           </div>
         </main>
       </div>
+
+      <CommandDialog open={searchOpen} onOpenChange={setSearchOpen}>
+        <CommandInput placeholder="Search workforce console…" />
+        <CommandList>
+          <CommandEmpty>No matches.</CommandEmpty>
+          {navigation.map((section) => (
+            <CommandGroup key={section.section} heading={section.section}>
+              {section.items.map((item) => (
+                <CommandItem key={item.id} value={item.label} onSelect={() => goTo(item.route)}>
+                  {item.label}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          ))}
+        </CommandList>
+      </CommandDialog>
     </div>
   );
 }

@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import {
   ConsoleButton,
   DataTable,
@@ -9,7 +11,17 @@ import {
   StatTile,
   StatusBadge,
 } from "@/components/hr/primitives";
-import { timesheets } from "@/lib/hr/data";
+import { labelize } from "@/lib/hr/status";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { timesheets as initialTimesheets } from "@/lib/hr/data";
+
+const FILTERS = ["All", "Submitted", "Pending Approval", "Approved", "Rejected", "Locked"];
 
 export const Route = createFileRoute("/hr/timesheets")({
   head: () => ({
@@ -21,13 +33,53 @@ export const Route = createFileRoute("/hr/timesheets")({
           "Submit, query, approve and lock timesheets by period. Approved timesheets mark payroll inputs ready automatically.",
       },
       { property: "og:title", content: "Timesheets — WoCOS HR" },
-      { property: "og:description", content: "Period timesheet approval feeding payroll readiness." },
+      {
+        property: "og:description",
+        content: "Period timesheet approval feeding payroll readiness.",
+      },
     ],
   }),
   component: TimesheetsPage,
 });
 
 function TimesheetsPage() {
+  const [timesheets, setTimesheets] = useState(() => initialTimesheets);
+  const [filter, setFilter] = useState("All");
+  const [queryOpen, setQueryOpen] = useState(false);
+  const [query, setQuery] = useState("");
+
+  const rows = useMemo(() => {
+    return timesheets.filter((t) => {
+      if (filter !== "All" && labelize(t.status) !== filter) return false;
+      if (
+        query.trim() &&
+        !`${t.employee} ${t.id}`.toLowerCase().includes(query.trim().toLowerCase())
+      )
+        return false;
+      return true;
+    });
+  }, [timesheets, filter, query]);
+
+  const approveBatch = () => {
+    const approvable = timesheets.filter(
+      (t) => t.status === "submitted" || t.status === "pending_approval",
+    );
+    if (approvable.length === 0) {
+      toast.info("Nothing to approve", { description: "No timesheets are awaiting approval" });
+      return;
+    }
+    setTimesheets((prev) =>
+      prev.map((t) =>
+        t.status === "submitted" || t.status === "pending_approval"
+          ? { ...t, status: "approved" }
+          : t,
+      ),
+    );
+    toast.success(`Approved ${approvable.length} timesheet${approvable.length === 1 ? "" : "s"}`, {
+      description: "Payroll inputs marked ready",
+    });
+  };
+
   return (
     <>
       <PageHeader
@@ -36,8 +88,10 @@ function TimesheetsPage() {
         subtitle="Period 01–14 Sep 2026 · 172 submitted · 1 pending your approval"
         actions={
           <>
-            <ConsoleButton>Query</ConsoleButton>
-            <ConsoleButton variant="primary">Approve Batch</ConsoleButton>
+            <ConsoleButton onClick={() => setQueryOpen(true)}>Query</ConsoleButton>
+            <ConsoleButton variant="primary" onClick={approveBatch}>
+              Approve Batch
+            </ConsoleButton>
           </>
         }
       />
@@ -51,12 +105,12 @@ function TimesheetsPage() {
         <StatTile label="Locked" value={7} note="period closed" tone="success" />
       </div>
 
-      <FilterBar filters={["All", "Submitted", "Pending Approval", "Approved", "Rejected", "Locked"]} />
+      <FilterBar filters={FILTERS} value={filter} onChange={setFilter} />
 
-      <Panel title="Timesheet Register" meta="01–14 Sep 2026">
+      <Panel title="Timesheet Register" meta={`${rows.length} of ${timesheets.length}`}>
         <DataTable
           columns={["Timesheet", "Employee", "Client", "Period", "Hours", "Overtime", "Status"]}
-          rows={timesheets.map((t) => [
+          rows={rows.map((t) => [
             <span className="data-cell text-[11px] text-sky">{t.id}</span>,
             <span className="text-fg">{t.employee}</span>,
             <span className="text-dim">{t.client}</span>,
@@ -77,7 +131,10 @@ function TimesheetsPage() {
               ["HR review", "pending"],
               ["Locked for payroll", "not_started"],
             ].map((row, i) => (
-              <li key={row[0]} className="flex items-center justify-between gap-3 border-b border-line/60 py-1.5 last:border-0">
+              <li
+                key={row[0]}
+                className="flex items-center justify-between gap-3 border-b border-line/60 py-1.5 last:border-0"
+              >
                 <span className="flex items-center gap-2.5">
                   <span className="data-cell text-[10px] text-mute">0{i + 1}</span>
                   {row[0]}
@@ -90,8 +147,9 @@ function TimesheetsPage() {
 
         <Panel title="Automation">
           <p className="text-[12.5px] leading-relaxed text-dim">
-            When a timesheet is approved, the matching payroll input is marked ready and appears in Payroll Operations.
-            Rejected timesheets block payroll readiness until resubmitted and approved.
+            When a timesheet is approved, the matching payroll input is marked ready and appears in
+            Payroll Operations. Rejected timesheets block payroll readiness until resubmitted and
+            approved.
           </p>
           <div className="mt-3 rounded-md bg-panel2 p-3 ring-1 ring-line">
             <div className="console-label">Blocking payroll now</div>
@@ -103,6 +161,32 @@ function TimesheetsPage() {
       </div>
 
       <DemoNote />
+
+      <Dialog open={queryOpen} onOpenChange={setQueryOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Query timesheets</DialogTitle>
+          </DialogHeader>
+          <input
+            autoFocus
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search by employee or timesheet ID…"
+            className="h-9 w-full rounded-md bg-panel2 px-3 text-[13px] text-fg ring-1 ring-line outline-none focus:ring-teal/50"
+          />
+          <DialogFooter>
+            <ConsoleButton
+              variant="primary"
+              onClick={() => {
+                setQueryOpen(false);
+                toast.info(query.trim() ? `Filtered to "${query.trim()}"` : "Query cleared");
+              }}
+            >
+              Apply
+            </ConsoleButton>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

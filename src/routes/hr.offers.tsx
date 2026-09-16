@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { toast } from "sonner";
 import {
   ConsoleButton,
   DataTable,
@@ -11,7 +13,20 @@ import {
   StatusBadge,
   Timeline,
 } from "@/components/hr/primitives";
-import { offers } from "@/lib/hr/data";
+import { offers as initialOffers } from "@/lib/hr/data";
+import { labelize } from "@/lib/hr/status";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+type Offer = (typeof initialOffers)[number];
 
 export const Route = createFileRoute("/hr/offers")({
   head: () => ({
@@ -29,8 +44,49 @@ export const Route = createFileRoute("/hr/offers")({
   component: OffersPage,
 });
 
+let nextOfferSeq = 990;
+
 function OffersPage() {
-  const focus = offers[0]!;
+  const [offerList, setOfferList] = useState<Offer[]>(initialOffers);
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [generateOpen, setGenerateOpen] = useState(false);
+  const focus = offerList[0]!;
+  const filtered = offerList.filter(
+    (o) => statusFilter === "All" || labelize(o.status) === statusFilter,
+  );
+
+  const requestApproval = () => {
+    const draft = offerList.find((o) => o.status === "draft");
+    if (!draft) {
+      toast.info("No draft offers waiting on approval");
+      return;
+    }
+    setOfferList((prev) =>
+      prev.map((o) => (o.id === draft.id ? { ...o, status: "awaiting_approval" } : o)),
+    );
+    toast.success(`Approval requested for ${draft.candidate}`, { description: draft.id });
+  };
+
+  const generateOffer = (form: FormData) => {
+    const candidate = String(form.get("candidate") ?? "").trim();
+    const position = String(form.get("position") ?? "").trim();
+    if (!candidate || !position) return;
+    const created: Offer = {
+      id: `OFR-${nextOfferSeq--}`,
+      candidate,
+      position,
+      client: String(form.get("client") ?? "").trim() || "—",
+      salary: String(form.get("salary") ?? "").trim() || "—",
+      employment_type: String(form.get("employment_type") ?? "Full-time"),
+      start_date: String(form.get("start_date") ?? "—"),
+      offer_date: "—",
+      expiry: "—",
+      status: "draft",
+    };
+    setOfferList((prev) => [created, ...prev]);
+    setGenerateOpen(false);
+    toast.success(`Offer generated for ${candidate}`, { description: created.id });
+  };
 
   return (
     <>
@@ -40,8 +96,10 @@ function OffersPage() {
         subtitle="5 offers in flight · 88% acceptance rate · 1 expired without response"
         actions={
           <>
-            <ConsoleButton>Request approval</ConsoleButton>
-            <ConsoleButton variant="primary">+ Generate Offer</ConsoleButton>
+            <ConsoleButton onClick={requestApproval}>Request approval</ConsoleButton>
+            <ConsoleButton variant="primary" onClick={() => setGenerateOpen(true)}>
+              + Generate Offer
+            </ConsoleButton>
           </>
         }
       />
@@ -54,12 +112,26 @@ function OffersPage() {
         <StatTile label="Expired" value={1} note="re-issue or close" tone="danger" />
       </div>
 
-      <FilterBar filters={["All", "Awaiting Approval", "Sent", "Accepted", "Declined", "Expired"]} />
+      <FilterBar
+        filters={["All", "Awaiting Approval", "Sent", "Accepted", "Declined", "Expired"]}
+        value={statusFilter}
+        onChange={setStatusFilter}
+      />
 
-      <Panel title="Offer Register" meta={`${offers.length} records`}>
+      <Panel title="Offer Register" meta={`${filtered.length} of ${offerList.length} shown`}>
         <DataTable
-          columns={["Offer", "Candidate", "Position", "Client", "Salary", "Type", "Start", "Expiry", "Status"]}
-          rows={offers.map((o) => [
+          columns={[
+            "Offer",
+            "Candidate",
+            "Position",
+            "Client",
+            "Salary",
+            "Type",
+            "Start",
+            "Expiry",
+            "Status",
+          ]}
+          rows={filtered.map((o) => [
             <span className="data-cell text-[11px] text-sky">{o.id}</span>,
             <span className="text-fg">{o.candidate}</span>,
             o.position,
@@ -87,9 +159,18 @@ function OffersPage() {
               { k: "Client", v: focus.client },
               { k: "Salary", v: <span className="data-cell">{focus.salary}</span> },
               { k: "Employment type", v: focus.employment_type },
-              { k: "Offer date", v: <span className="data-cell text-[11px]">{focus.offer_date}</span> },
-              { k: "Expiry date", v: <span className="data-cell text-[11px]">{focus.expiry}</span> },
-              { k: "Start date", v: <span className="data-cell text-[11px]">{focus.start_date}</span> },
+              {
+                k: "Offer date",
+                v: <span className="data-cell text-[11px]">{focus.offer_date}</span>,
+              },
+              {
+                k: "Expiry date",
+                v: <span className="data-cell text-[11px]">{focus.expiry}</span>,
+              },
+              {
+                k: "Start date",
+                v: <span className="data-cell text-[11px]">{focus.start_date}</span>,
+              },
               { k: "Verification", v: <StatusBadge status="cleared" /> },
               { k: "Approval chain", v: "Recruiter → HR Manager → Client Manager" },
             ]}
@@ -108,13 +189,58 @@ function OffersPage() {
           <div className="rounded-md bg-teal/8 p-3 ring-1 ring-teal/25">
             <div className="console-label text-teal">Automation fired</div>
             <p className="mt-1.5 text-[12px] leading-relaxed text-dim">
-              Offer accepted → digital onboarding case created for Sarah Adeyemi with the ABC Company checklist variant.
+              Offer accepted → digital onboarding case created for Sarah Adeyemi with the ABC
+              Company checklist variant.
             </p>
           </div>
         </Panel>
       </div>
 
       <DemoNote />
+
+      <Dialog open={generateOpen} onOpenChange={setGenerateOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Generate Offer</DialogTitle>
+            <DialogDescription>Creates a new draft offer in the register.</DialogDescription>
+          </DialogHeader>
+          <form
+            className="space-y-3"
+            onSubmit={(e) => {
+              e.preventDefault();
+              generateOffer(new FormData(e.currentTarget));
+            }}
+          >
+            <div className="space-y-1.5">
+              <Label htmlFor="ofr-candidate">Candidate</Label>
+              <Input id="ofr-candidate" name="candidate" required />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="ofr-position">Position</Label>
+              <Input id="ofr-position" name="position" required />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="ofr-client">Client</Label>
+                <Input id="ofr-client" name="client" />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="ofr-salary">Salary</Label>
+                <Input id="ofr-salary" name="salary" placeholder="₦0 / mo" />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="ofr-start">Start date</Label>
+              <Input id="ofr-start" name="start_date" type="date" />
+            </div>
+            <DialogFooter>
+              <ConsoleButton type="submit" variant="primary">
+                Generate Offer
+              </ConsoleButton>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

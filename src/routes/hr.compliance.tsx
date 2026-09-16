@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import {
   BarList,
   ConsoleButton,
@@ -10,8 +12,18 @@ import {
   StatTile,
   StatusBadge,
 } from "@/components/hr/primitives";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { complianceAlertWindows, complianceItems } from "@/lib/hr/data";
 import { labelize } from "@/lib/hr/status";
+
+const FILTERS = ["All", "Compliant", "Expiring", "Expired", "Missing", "Under Review"];
+const ALERT_WINDOWS = ["30 days", "14 days", "7 days", "Expired"];
 
 export const Route = createFileRoute("/hr/compliance")({
   head: () => ({
@@ -23,13 +35,35 @@ export const Route = createFileRoute("/hr/compliance")({
           "Track contracts, identity documents, tax, pension, health benefits, certifications, background checks and client requirements with expiry alerting.",
       },
       { property: "og:title", content: "Compliance — WoCOS HR" },
-      { property: "og:description", content: "Document and certification compliance with expiry alerting." },
+      {
+        property: "og:description",
+        content: "Document and certification compliance with expiry alerting.",
+      },
     ],
   }),
   component: CompliancePage,
 });
 
 function CompliancePage() {
+  const [filter, setFilter] = useState("All");
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [enabledWindows, setEnabledWindows] = useState<Record<string, boolean>>({
+    "30 days": true,
+    "14 days": true,
+    "7 days": true,
+    Expired: true,
+  });
+
+  const rows = useMemo(
+    () => complianceItems.filter((c) => filter === "All" || labelize(c.status) === filter),
+    [filter],
+  );
+
+  const selectFilter = (next: string) => {
+    setFilter(next);
+    toast.info(`Filtered to ${next}`);
+  };
+
   return (
     <>
       <PageHeader
@@ -38,8 +72,10 @@ function CompliancePage() {
         subtitle="94% compliance rate · 12 items expiring within 30 days · 3 already expired"
         actions={
           <>
-            <ConsoleButton>Alert settings</ConsoleButton>
-            <ConsoleButton variant="primary">Expired (3)</ConsoleButton>
+            <ConsoleButton onClick={() => setSettingsOpen(true)}>Alert settings</ConsoleButton>
+            <ConsoleButton variant="primary" onClick={() => selectFilter("Expired")}>
+              Expired (3)
+            </ConsoleButton>
           </>
         }
       />
@@ -66,12 +102,12 @@ function CompliancePage() {
         </div>
       </Panel>
 
-      <FilterBar filters={["All", "Compliant", "Expiring", "Expired", "Missing", "Under Review"]} />
+      <FilterBar filters={FILTERS} value={filter} onChange={selectFilter} />
 
-      <Panel title="Compliance Register" meta={`${complianceItems.length} shown`}>
+      <Panel title="Compliance Register" meta={`${rows.length} of ${complianceItems.length}`}>
         <DataTable
           columns={["Category", "Item", "Expires", "Status"]}
-          rows={complianceItems.map((c) => [
+          rows={rows.map((c) => [
             <span className="text-dim">{labelize(c.category)}</span>,
             <span className="text-fg">{c.item}</span>,
             <span className="data-cell text-[11px]">{c.expires}</span>,
@@ -98,14 +134,22 @@ function CompliancePage() {
 
         <Panel title="Automation">
           <p className="text-[12.5px] leading-relaxed text-dim">
-            Contracts and certifications nearing expiry raise a compliance alert at 30, 14 and 7 days, and again on the
-            expiry date. Alerts surface on the command center and in the responsible manager's queue.
+            Contracts and certifications nearing expiry raise a compliance alert at 30, 14 and 7
+            days, and again on the expiry date. Alerts surface on the command center and in the
+            responsible manager's queue.
           </p>
           <div className="mt-3 space-y-2">
-            {["30 days", "14 days", "7 days", "Expired"].map((w, i) => (
-              <div key={w} className="flex items-center justify-between rounded-md bg-panel2 px-3 py-2 ring-1 ring-line">
+            {ALERT_WINDOWS.map((w, i) => (
+              <div
+                key={w}
+                className="flex items-center justify-between rounded-md bg-panel2 px-3 py-2 ring-1 ring-line"
+              >
                 <span className="text-[12.5px] text-dim">{w} before expiry</span>
-                <StatusBadge status={i === 3 ? "expired" : "expiring"} />
+                {enabledWindows[w] ? (
+                  <StatusBadge status={i === 3 ? "expired" : "expiring"} />
+                ) : (
+                  <StatusBadge status="paused" tone="neutral" />
+                )}
               </div>
             ))}
           </div>
@@ -113,6 +157,43 @@ function CompliancePage() {
       </div>
 
       <DemoNote />
+
+      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Alert settings</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            {ALERT_WINDOWS.map((w) => (
+              <label
+                key={w}
+                className="flex items-center justify-between rounded-md bg-panel2 px-3 py-2 text-[12.5px] text-dim ring-1 ring-line"
+              >
+                {w} before expiry
+                <input
+                  type="checkbox"
+                  checked={enabledWindows[w] ?? true}
+                  onChange={(e) =>
+                    setEnabledWindows((prev) => ({ ...prev, [w]: e.target.checked }))
+                  }
+                  className="size-3.5 accent-teal"
+                />
+              </label>
+            ))}
+          </div>
+          <DialogFooter>
+            <ConsoleButton
+              variant="primary"
+              onClick={() => {
+                setSettingsOpen(false);
+                toast.success("Alert settings saved");
+              }}
+            >
+              Save
+            </ConsoleButton>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

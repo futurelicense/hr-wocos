@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { labelize, toneClasses, toneBar, toneFor, type Tone } from "@/lib/hr/status";
 
@@ -94,7 +94,9 @@ export function StatTile({
     >
       <div className="console-label truncate">{label}</div>
       <div className="numeral mt-2 text-[26px] leading-none">{value}</div>
-      {note ? <div className={cn("mt-2 font-mono text-[10px]", noteColor[tone])}>{note}</div> : null}
+      {note ? (
+        <div className={cn("mt-2 font-mono text-[10px]", noteColor[tone])}>{note}</div>
+      ) : null}
     </div>
   );
 }
@@ -126,16 +128,24 @@ export function ConsoleButton({
   children,
   variant = "ghost",
   className,
+  onClick,
+  disabled,
+  type = "button",
 }: {
   children: ReactNode;
   variant?: "ghost" | "primary";
   className?: string;
+  onClick?: () => void;
+  disabled?: boolean;
+  type?: "button" | "submit";
 }) {
   return (
     <button
-      type="button"
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
       className={cn(
-        "h-9 rounded-md px-3.5 text-[13px] font-medium transition-colors",
+        "h-9 rounded-md px-3.5 text-[13px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50",
         variant === "primary"
           ? "bg-teal text-ink ring-1 ring-teal hover:bg-teal/90"
           : "bg-panel2 text-dim ring-1 ring-line hover:text-fg",
@@ -147,16 +157,36 @@ export function ConsoleButton({
   );
 }
 
-export function FilterBar({ filters, right }: { filters: string[]; right?: ReactNode }) {
+export function FilterBar({
+  filters,
+  right,
+  value,
+  onChange,
+}: {
+  filters: string[];
+  right?: ReactNode;
+  value?: string;
+  onChange?: (filter: string) => void;
+}) {
+  const [internal, setInternal] = useState(filters[0]);
+  const active = value ?? internal;
+  const select = (f: string) => {
+    setInternal(f);
+    onChange?.(f);
+  };
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {filters.map((f, i) => (
+      {filters.map((f) => (
         <button
           key={f}
           type="button"
+          onClick={() => select(f)}
+          aria-pressed={f === active}
           className={cn(
             "h-8 rounded-md px-2.5 font-mono text-[11px] ring-1 transition-colors",
-            i === 0 ? "bg-teal/10 text-teal ring-teal/25" : "bg-panel2 text-mute ring-line hover:text-fg",
+            f === active
+              ? "bg-teal/10 text-teal ring-teal/25"
+              : "bg-panel2 text-mute ring-line hover:text-fg",
           )}
         >
           {f}
@@ -194,7 +224,10 @@ export function DataTable({
         </thead>
         <tbody>
           {rows.map((r, ri) => (
-            <tr key={ri} className="border-b border-line/60 text-[12.5px] transition-colors last:border-0 hover:bg-panel2/60">
+            <tr
+              key={ri}
+              className="border-b border-line/60 text-[12.5px] transition-colors last:border-0 hover:bg-panel2/60"
+            >
               {r.map((cell, ci) => (
                 <td key={ci} className="px-3 py-2.5 align-middle">
                   {cell}
@@ -258,7 +291,9 @@ export function ColumnChart({
             />
           </div>
           <span className="font-mono text-[10px] text-fg">{item.value}</span>
-          <span className="font-mono text-[8px] tracking-wide text-mute uppercase">{item.label}</span>
+          <span className="font-mono text-[8px] tracking-wide text-mute uppercase">
+            {item.label}
+          </span>
         </div>
       ))}
     </div>
@@ -268,22 +303,24 @@ export function ColumnChart({
 export function Progress({ value, tone = "success" }: { value: number; tone?: Tone }) {
   return (
     <div className="h-1.5 w-full rounded-full bg-line">
-      <div className={cn("animate-latch h-full rounded-full", toneBar[tone])} style={{ width: `${value}%` }} />
+      <div
+        className={cn("animate-latch h-full rounded-full", toneBar[tone])}
+        style={{ width: `${value}%` }}
+      />
     </div>
   );
 }
 
-export function Checklist({
-  items,
-}: {
-  items: { label: string; status: string }[];
-}) {
+export function Checklist({ items }: { items: { label: string; status: string }[] }) {
   return (
     <ul className="space-y-1.5">
       {items.map((item) => {
         const tone = toneFor(item.status);
         return (
-          <li key={item.label} className="flex items-center justify-between gap-3 border-b border-line/60 py-1.5 last:border-0">
+          <li
+            key={item.label}
+            className="flex items-center justify-between gap-3 border-b border-line/60 py-1.5 last:border-0"
+          >
             <span className="flex items-center gap-2.5 text-[12.5px]">
               <Dot tone={tone} />
               {item.label}
@@ -327,16 +364,32 @@ export function KeyValue({ rows }: { rows: { k: string; v: ReactNode }[] }) {
   );
 }
 
-export function Tabs({ tabs }: { tabs: string[] }) {
+export function Tabs({
+  tabs,
+  value,
+  onChange,
+}: {
+  tabs: string[];
+  value?: string;
+  onChange?: (tab: string) => void;
+}) {
+  const [internal, setInternal] = useState(tabs[0]);
+  const active = value ?? internal;
+  const select = (t: string) => {
+    setInternal(t);
+    onChange?.(t);
+  };
   return (
     <div className="flex flex-wrap gap-1 border-b border-line pb-px">
-      {tabs.map((t, i) => (
+      {tabs.map((t) => (
         <button
           key={t}
           type="button"
+          onClick={() => select(t)}
+          aria-selected={t === active}
           className={cn(
             "-mb-px rounded-t-md border-b-2 px-3 py-2 text-[12.5px] transition-colors",
-            i === 0 ? "border-teal text-fg" : "border-transparent text-mute hover:text-dim",
+            t === active ? "border-teal text-fg" : "border-transparent text-mute hover:text-dim",
           )}
         >
           {labelize(t)}

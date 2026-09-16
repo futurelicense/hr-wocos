@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { toast } from "sonner";
 import {
   BarList,
   ColumnChart,
@@ -35,11 +36,35 @@ export const Route = createFileRoute("/hr/")({
           "Live workforce overview for TeamAce: headcount, open vacancies, pipeline, verification, deployment readiness, payroll exceptions and approvals.",
       },
       { property: "og:title", content: "HR Command Center — WoCOS HR" },
-      { property: "og:description", content: "Workforce operations at a glance across every client." },
+      {
+        property: "og:description",
+        content: "Workforce operations at a glance across every client.",
+      },
     ],
   }),
   component: CommandCenter,
 });
+
+function exportOverviewCsv() {
+  const rows = [
+    ["Pending Approvals", "", ""],
+    ...pendingApprovals.map((a) => [a.title, a.meta, a.status]),
+    ["Attention Required", "", ""],
+    ...attentionRequired.map((a) => [a.title, a.meta, a.tone]),
+  ];
+  const escape = (v: string) => `"${v.replace(/"/g, '""')}"`;
+  const csv = [["Item", "Detail", "Status"], ...rows]
+    .map((r) => r.map(escape).join(","))
+    .join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "workforce-overview.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+  toast.success(`Exported ${pendingApprovals.length + attentionRequired.length} overview items`);
+}
 
 function CommandCenter() {
   return (
@@ -50,7 +75,7 @@ function CommandCenter() {
         subtitle={`Live · ${org.today} · ${org.clock} · updated 2m ago`}
         actions={
           <>
-            <ConsoleButton>Export</ConsoleButton>
+            <ConsoleButton onClick={exportOverviewCsv}>Export</ConsoleButton>
             <Link
               to="/hr/workforce-requests"
               className="flex h-9 items-center rounded-md bg-teal px-4 text-[13px] font-semibold text-ink ring-1 ring-teal transition-colors hover:bg-teal/90"
@@ -62,21 +87,81 @@ function CommandCenter() {
       />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-        <StatTile label="Total Workforce" value={metrics.total_workforce} note="▲ 6 this month" tone="success" />
-        <StatTile label="Open Vacancies" value={metrics.open_vacancies} note="across 6 clients" tone="info" />
-        <StatTile label="In Pipeline" value={metrics.candidates_in_pipeline} note="Sourcing → Offer" tone="info" />
-        <StatTile label="Verification Pending" value={metrics.verification_pending} note="3 awaiting consent" tone="warning" />
-        <StatTile label="Deployment Ready" value={metrics.deployment_ready} note="cleared for dispatch" tone="success" />
-        <StatTile label="Payroll Exceptions" value={metrics.payroll_exceptions} note="2 critical" tone="danger" />
+        <StatTile
+          label="Total Workforce"
+          value={metrics.total_workforce}
+          note="▲ 6 this month"
+          tone="success"
+        />
+        <StatTile
+          label="Open Vacancies"
+          value={metrics.open_vacancies}
+          note="across 6 clients"
+          tone="info"
+        />
+        <StatTile
+          label="In Pipeline"
+          value={metrics.candidates_in_pipeline}
+          note="Sourcing → Offer"
+          tone="info"
+        />
+        <StatTile
+          label="Verification Pending"
+          value={metrics.verification_pending}
+          note="3 awaiting consent"
+          tone="warning"
+        />
+        <StatTile
+          label="Deployment Ready"
+          value={metrics.deployment_ready}
+          note="cleared for dispatch"
+          tone="success"
+        />
+        <StatTile
+          label="Payroll Exceptions"
+          value={metrics.payroll_exceptions}
+          note="2 critical"
+          tone="danger"
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-        <StatTile label="Interviews Today" value={metrics.interviews_today} note="2 with client panels" tone="info" />
-        <StatTile label="Onboarding" value={metrics.employees_onboarding} note="2 blocked" tone="warning" />
-        <StatTile label="Active Deployments" value={metrics.active_deployments} note="6 clients · 5 sites" tone="success" />
-        <StatTile label="Open HR Requests" value={metrics.open_hr_requests} note="3 overdue" tone="warning" />
-        <StatTile label="Compliance Alerts" value={metrics.compliance_alerts} note="3 expired" tone="danger" />
-        <StatTile label="Contracts Expiring" value={metrics.contracts_expiring} note="within 30 days" tone="warning" />
+        <StatTile
+          label="Interviews Today"
+          value={metrics.interviews_today}
+          note="2 with client panels"
+          tone="info"
+        />
+        <StatTile
+          label="Onboarding"
+          value={metrics.employees_onboarding}
+          note="2 blocked"
+          tone="warning"
+        />
+        <StatTile
+          label="Active Deployments"
+          value={metrics.active_deployments}
+          note="6 clients · 5 sites"
+          tone="success"
+        />
+        <StatTile
+          label="Open HR Requests"
+          value={metrics.open_hr_requests}
+          note="3 overdue"
+          tone="warning"
+        />
+        <StatTile
+          label="Compliance Alerts"
+          value={metrics.compliance_alerts}
+          note="3 expired"
+          tone="danger"
+        />
+        <StatTile
+          label="Contracts Expiring"
+          value={metrics.contracts_expiring}
+          note="within 30 days"
+          tone="warning"
+        />
       </div>
 
       <LifecycleRail />
@@ -97,7 +182,10 @@ function CommandCenter() {
       </div>
 
       <div className="grid gap-3 lg:grid-cols-3">
-        <Panel title="Pending Approvals" action={<StatusBadge status="awaiting_approval" tone="warning" />}>
+        <Panel
+          title="Pending Approvals"
+          action={<StatusBadge status="awaiting_approval" tone="warning" />}
+        >
           <ul className="space-y-2 text-[12px]">
             {pendingApprovals.map((a) => (
               <li
@@ -117,7 +205,10 @@ function CommandCenter() {
         <Panel title="Attention Required" action={<StatusBadge status="critical" tone="danger" />}>
           <ul className="space-y-2 text-[12px]">
             {attentionRequired.map((a) => (
-              <li key={a.title} className="flex gap-2.5 border-b border-line/70 py-1.5 last:border-0">
+              <li
+                key={a.title}
+                className="flex gap-2.5 border-b border-line/70 py-1.5 last:border-0"
+              >
                 <span className="mt-1.5">
                   <Dot tone={a.tone} />
                 </span>
@@ -166,7 +257,13 @@ function CommandCenter() {
           <Timeline items={recentActivity} />
         </Panel>
         <Panel title="Monthly Hiring Trend" meta="hires">
-          <ColumnChart items={hiringTrend.map((h) => ({ label: h.month, value: h.hires, tone: "success" as const }))} />
+          <ColumnChart
+            items={hiringTrend.map((h) => ({
+              label: h.month,
+              value: h.hires,
+              tone: "success" as const,
+            }))}
+          />
         </Panel>
       </div>
 

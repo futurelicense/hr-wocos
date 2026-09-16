@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
 import {
   ConsoleButton,
   DataTable,
@@ -9,7 +11,17 @@ import {
   StatTile,
   StatusBadge,
 } from "@/components/hr/primitives";
-import { payrollExceptions, payrollStages } from "@/lib/hr/data";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { payrollExceptions, payrollStages as initialPayrollStages } from "@/lib/hr/data";
 
 export const Route = createFileRoute("/hr/payroll")({
   head: () => ({
@@ -21,13 +33,43 @@ export const Route = createFileRoute("/hr/payroll")({
           "Payroll workflow from timesheets and inputs through exception review, HR and client approval, to handoff and payment status.",
       },
       { property: "og:title", content: "Payroll Operations — WoCOS HR" },
-      { property: "og:description", content: "Payroll workflow, exceptions and handoff — not a calculation engine." },
+      {
+        property: "og:description",
+        content: "Payroll workflow, exceptions and handoff — not a calculation engine.",
+      },
     ],
   }),
   component: PayrollPage,
 });
 
 function PayrollPage() {
+  const [stages, setStages] = useState(() => initialPayrollStages);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [handedOff, setHandedOff] = useState(false);
+  const exceptionsRef = useRef<HTMLDivElement>(null);
+
+  const jumpToExceptions = () => {
+    exceptionsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    toast.info("6 exceptions need review before handoff");
+  };
+
+  const confirmHandoff = () => {
+    setStages((prev) =>
+      prev.map((s) =>
+        s.id === "payroll_handoff"
+          ? { ...s, status: "processed", count: 168 }
+          : s.id === "payment_status"
+            ? { ...s, status: "awaiting_approval", count: 168 }
+            : s,
+      ),
+    );
+    setHandedOff(true);
+    setConfirmOpen(false);
+    toast.success("168 payroll inputs handed off", {
+      description: "Payment status now pending with provider",
+    });
+  };
+
   return (
     <>
       <PageHeader
@@ -36,17 +78,24 @@ function PayrollPage() {
         subtitle="September cycle · 91% ready · 6 exceptions · awaiting HR review"
         actions={
           <>
-            <ConsoleButton>Exceptions (6)</ConsoleButton>
-            <ConsoleButton variant="primary">Hand Off to Payroll</ConsoleButton>
+            <ConsoleButton onClick={jumpToExceptions}>Exceptions (6)</ConsoleButton>
+            <ConsoleButton
+              variant="primary"
+              disabled={handedOff}
+              onClick={() => setConfirmOpen(true)}
+            >
+              {handedOff ? "Handed Off" : "Hand Off to Payroll"}
+            </ConsoleButton>
           </>
         }
       />
 
       <div className="rounded-lg bg-sky/8 p-3 ring-1 ring-sky/25">
         <p className="text-[12px] leading-relaxed text-dim">
-          <span className="font-mono text-[10px] tracking-[0.14em] text-sky uppercase">Scope</span> — WoCOS HR runs the
-          payroll <em>workflow</em>: inputs, exceptions, approvals and handoff. Salary calculation itself is performed by
-          your payroll system or provider; this module prepares and hands over the approved inputs.
+          <span className="font-mono text-[10px] tracking-[0.14em] text-sky uppercase">Scope</span>{" "}
+          — WoCOS HR runs the payroll <em>workflow</em>: inputs, exceptions, approvals and handoff.
+          Salary calculation itself is performed by your payroll system or provider; this module
+          prepares and hands over the approved inputs.
         </p>
       </div>
 
@@ -59,7 +108,7 @@ function PayrollPage() {
 
       <Panel title="Payroll Workflow" meta="9 stages" bodyClassName="p-4">
         <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-9">
-          {payrollStages.map((s, i) => (
+          {stages.map((s, i) => (
             <div key={s.id} className="console-inset p-2.5">
               <div className="flex items-center justify-between">
                 <span className="data-cell text-[10px] text-mute">0{i + 1}</span>
@@ -72,7 +121,7 @@ function PayrollPage() {
         </div>
       </Panel>
 
-      <div className="grid gap-3 lg:grid-cols-3">
+      <div ref={exceptionsRef} className="grid gap-3 lg:grid-cols-3">
         <Panel title="Exception Queue" meta="6 items" className="lg:col-span-2">
           <DataTable
             columns={["Employee", "Client", "Issue", "Severity"]}
@@ -99,13 +148,32 @@ function PayrollPage() {
                 <span className="text-mute">{name}</span>
                 <span className="text-fg">{pct}%</span>
               </div>
-              <Progress value={pct as number} tone={(pct as number) >= 90 ? "success" : "warning"} />
+              <Progress
+                value={pct as number}
+                tone={(pct as number) >= 90 ? "success" : "warning"}
+              />
             </div>
           ))}
         </Panel>
       </div>
 
       <DemoNote />
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hand off payroll cycle?</AlertDialogTitle>
+            <AlertDialogDescription>
+              168 approved payroll inputs will be sent to your payroll provider for payment
+              processing. This closes input collection for the September cycle.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmHandoff}>Hand off</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

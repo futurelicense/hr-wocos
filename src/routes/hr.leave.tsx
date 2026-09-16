@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { toast } from "sonner";
 import {
   ConsoleButton,
   DataTable,
@@ -10,7 +12,17 @@ import {
   StatTile,
   StatusBadge,
 } from "@/components/hr/primitives";
-import { leaveBalances, leaveRequests } from "@/lib/hr/data";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { leaveBalances, leaveRequests as initialLeaveRequests } from "@/lib/hr/data";
+
+const VIEWS = ["Requests", "Calendar", "Balances"];
+const LEAVE_TYPES = ["Annual", "Sick", "Compassionate", "Study", "Maternity"];
 
 export const Route = createFileRoute("/hr/leave")({
   head: () => ({
@@ -85,6 +97,40 @@ export function LeaveCalendar() {
 }
 
 function LeavePage() {
+  const [leaveRequests, setLeaveRequests] = useState(() => initialLeaveRequests);
+  const [view, setView] = useState<string>(VIEWS[0]!);
+  const [newOpen, setNewOpen] = useState(false);
+  const [form, setForm] = useState({ employee: "", type: LEAVE_TYPES[0]!, from: "", to: "" });
+
+  const submitRequest = () => {
+    if (!form.employee.trim() || !form.from || !form.to) {
+      toast.error("Employee, from and to dates are required");
+      return;
+    }
+    const id = `LV-${600 + leaveRequests.length + 1}`;
+    const from = new Date(form.from);
+    const to = new Date(form.to);
+    const days = Math.max(1, Math.round((to.getTime() - from.getTime()) / 86_400_000) + 1);
+    setLeaveRequests((prev) => [
+      {
+        id,
+        employee: form.employee.trim(),
+        type: form.type,
+        from: form.from,
+        to: form.to,
+        days,
+        status: "submitted",
+      },
+      ...prev,
+    ]);
+    setNewOpen(false);
+    setForm({ employee: "", type: LEAVE_TYPES[0]!, from: "", to: "" });
+    setView("Requests");
+    toast.success(`Leave request ${id} submitted`, {
+      description: `${form.employee} · ${days} day(s)`,
+    });
+  };
+
   return (
     <>
       <PageHeader
@@ -93,8 +139,10 @@ function LeavePage() {
         subtitle="12 employees on leave today · 3 requests awaiting review · 2 coverage conflicts"
         actions={
           <>
-            <ConsoleButton>Calendar</ConsoleButton>
-            <ConsoleButton variant="primary">+ New Request</ConsoleButton>
+            <ConsoleButton onClick={() => setView("Calendar")}>Calendar</ConsoleButton>
+            <ConsoleButton variant="primary" onClick={() => setNewOpen(true)}>
+              + New Request
+            </ConsoleButton>
           </>
         }
       />
@@ -106,44 +154,114 @@ function LeavePage() {
         <StatTile label="Approved (30d)" value={28} note="92% within SLA" tone="success" />
       </div>
 
-      <FilterBar filters={["Requests", "Calendar", "Balances"]} />
+      <FilterBar filters={VIEWS} value={view} onChange={setView} />
 
-      <Panel title="Leave Requests" meta={`${leaveRequests.length} records`}>
-        <DataTable
-          columns={["Request", "Employee", "Type", "From", "To", "Days", "Status"]}
-          rows={leaveRequests.map((l) => [
-            <span className="data-cell text-[11px] text-sky">{l.id}</span>,
-            <span className="text-fg">{l.employee}</span>,
-            l.type,
-            <span className="data-cell text-[11px]">{l.from}</span>,
-            <span className="data-cell text-[11px]">{l.to}</span>,
-            <span className="data-cell">{l.days}</span>,
-            <StatusBadge status={l.status} />,
-          ])}
-        />
-      </Panel>
+      {view === "Requests" ? (
+        <Panel title="Leave Requests" meta={`${leaveRequests.length} records`}>
+          <DataTable
+            columns={["Request", "Employee", "Type", "From", "To", "Days", "Status"]}
+            rows={leaveRequests.map((l) => [
+              <span className="data-cell text-[11px] text-sky">{l.id}</span>,
+              <span className="text-fg">{l.employee}</span>,
+              l.type,
+              <span className="data-cell text-[11px]">{l.from}</span>,
+              <span className="data-cell text-[11px]">{l.to}</span>,
+              <span className="data-cell">{l.days}</span>,
+              <StatusBadge status={l.status} />,
+            ])}
+          />
+        </Panel>
+      ) : null}
 
       <div className="grid gap-3 lg:grid-cols-3">
-        <Panel title="Coverage Calendar" meta="10 – 23 Sep" className="lg:col-span-2">
-          <LeaveCalendar />
-        </Panel>
+        {view !== "Balances" ? (
+          <Panel
+            title="Coverage Calendar"
+            meta="10 – 23 Sep"
+            className={view === "Requests" ? "lg:col-span-2" : "lg:col-span-3"}
+          >
+            <LeaveCalendar />
+          </Panel>
+        ) : null}
 
-        <Panel title="Balances · Grace Umeh" bodyClassName="space-y-3 p-4">
-          {leaveBalances.map((b) => (
-            <div key={b.type}>
-              <div className="mb-1.5 flex items-center justify-between font-mono text-[10px]">
-                <span className="text-mute">{b.type}</span>
-                <span className="text-fg">
-                  {b.balance} of {b.entitled} left
-                </span>
+        {view !== "Calendar" ? (
+          <Panel
+            title="Balances · Grace Umeh"
+            bodyClassName="space-y-3 p-4"
+            className={view === "Requests" ? "" : "lg:col-span-3"}
+          >
+            {leaveBalances.map((b) => (
+              <div key={b.type}>
+                <div className="mb-1.5 flex items-center justify-between font-mono text-[10px]">
+                  <span className="text-mute">{b.type}</span>
+                  <span className="text-fg">
+                    {b.balance} of {b.entitled} left
+                  </span>
+                </div>
+                <Progress
+                  value={(b.taken / b.entitled) * 100}
+                  tone={b.balance === 0 ? "danger" : "success"}
+                />
               </div>
-              <Progress value={(b.taken / b.entitled) * 100} tone={b.balance === 0 ? "danger" : "success"} />
-            </div>
-          ))}
-        </Panel>
+            ))}
+          </Panel>
+        ) : null}
       </div>
 
+      {view === "Requests" ? null : (
+        <p className="font-mono text-[10px] tracking-[0.1em] text-mute uppercase">
+          Focused view · {view}
+        </p>
+      )}
+
       <DemoNote />
+
+      <Dialog open={newOpen} onOpenChange={setNewOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>New leave request</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2.5">
+            <input
+              autoFocus
+              value={form.employee}
+              onChange={(e) => setForm((f) => ({ ...f, employee: e.target.value }))}
+              placeholder="Employee name"
+              className="h-9 w-full rounded-md bg-panel2 px-3 text-[13px] text-fg ring-1 ring-line outline-none focus:ring-teal/50"
+            />
+            <select
+              value={form.type}
+              onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
+              className="h-9 w-full rounded-md bg-panel2 px-3 text-[13px] text-fg ring-1 ring-line outline-none focus:ring-teal/50"
+            >
+              {LEAVE_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+            <div className="flex gap-2.5">
+              <input
+                type="date"
+                value={form.from}
+                onChange={(e) => setForm((f) => ({ ...f, from: e.target.value }))}
+                className="h-9 w-full rounded-md bg-panel2 px-3 text-[13px] text-fg ring-1 ring-line outline-none focus:ring-teal/50"
+              />
+              <input
+                type="date"
+                value={form.to}
+                onChange={(e) => setForm((f) => ({ ...f, to: e.target.value }))}
+                className="h-9 w-full rounded-md bg-panel2 px-3 text-[13px] text-fg ring-1 ring-line outline-none focus:ring-teal/50"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <ConsoleButton variant="primary" onClick={submitRequest}>
+              Submit request
+            </ConsoleButton>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

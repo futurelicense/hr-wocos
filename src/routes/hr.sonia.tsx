@@ -1,6 +1,23 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { ConsoleButton, DemoNote, PageHeader, Panel, StatusBadge } from "@/components/hr/primitives";
+import { toast } from "sonner";
+import {
+  ConsoleButton,
+  DemoNote,
+  PageHeader,
+  Panel,
+  StatusBadge,
+} from "@/components/hr/primitives";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { soniaBrief, soniaPrompts } from "@/lib/hr/data";
 
 type Message = { role: "sonia" | "user"; text: string };
@@ -38,18 +55,23 @@ export const Route = createFileRoute("/hr/sonia")({
           "Sonia is the WoCOS HR intelligence assistant: ask about attention items, verification, onboarding, deployment readiness, payroll and compliance.",
       },
       { property: "og:title", content: "Sonia AI — WoCOS HR" },
-      { property: "og:description", content: "Ask about readiness, verification, payroll and compliance." },
+      {
+        property: "og:description",
+        content: "Ask about readiness, verification, payroll and compliance.",
+      },
     ],
   }),
   component: SoniaPage,
 });
 
 function SoniaPage() {
-  const [messages, setMessages] = useState<Message[]>([
+  const initialMessages: Message[] = [
     { role: "sonia", text: soniaBrief[0]! },
     { role: "sonia", text: soniaBrief[2]! },
-  ]);
+  ];
+  const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [draft, setDraft] = useState("");
+  const [clearOpen, setClearOpen] = useState(false);
 
   function ask(question: string) {
     const reply =
@@ -65,7 +87,11 @@ function SoniaPage() {
         section="Intelligence"
         title="Sonia · HR Intelligence Assistant"
         subtitle="Demo assistant · answers are generated from the illustrative demo dataset"
-        actions={<ConsoleButton>Clear thread</ConsoleButton>}
+        actions={
+          <ConsoleButton onClick={() => setClearOpen(true)} disabled={messages.length === 0}>
+            Clear thread
+          </ConsoleButton>
+        }
       />
 
       <div className="grid gap-3 lg:grid-cols-3">
@@ -92,7 +118,9 @@ function SoniaPage() {
                     : "max-w-[85%] rounded-lg bg-panel2 px-3 py-2 text-[12.5px] leading-relaxed text-dim ring-1 ring-line"
                 }
               >
-                {m.role === "sonia" ? <span className="console-label mb-1 block text-sky">Sonia</span> : null}
+                {m.role === "sonia" ? (
+                  <span className="console-label mb-1 block text-sky">Sonia</span>
+                ) : null}
                 {m.text}
               </div>
             ))}
@@ -111,7 +139,12 @@ function SoniaPage() {
               placeholder="Ask Sonia about your workforce…"
               className="h-9 flex-1 rounded-md bg-panel2 px-3 text-[12.5px] text-fg ring-1 ring-line outline-none placeholder:text-mute focus:ring-teal/40"
             />
-            <ConsoleButton variant="primary" className="px-4">
+            <ConsoleButton
+              variant="primary"
+              type="submit"
+              className="px-4"
+              disabled={!draft.trim()}
+            >
               Ask
             </ConsoleButton>
           </form>
@@ -133,13 +166,37 @@ function SoniaPage() {
 
       <div className="rounded-lg bg-sky/8 p-3 ring-1 ring-sky/25">
         <p className="text-[12px] leading-relaxed text-dim">
-          <span className="font-mono text-[10px] tracking-[0.14em] text-sky uppercase">Proposed capability</span> — in
-          this prototype Sonia responds from the demo dataset. Live reasoning over your real workforce data is proposed,
-          not yet operational.
+          <span className="font-mono text-[10px] tracking-[0.14em] text-sky uppercase">
+            Proposed capability
+          </span>{" "}
+          — in this prototype Sonia responds from the demo dataset. Live reasoning over your real
+          workforce data is proposed, not yet operational.
         </p>
       </div>
 
       <DemoNote />
+
+      <AlertDialog open={clearOpen} onOpenChange={setClearOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear conversation?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This removes every message in the current thread.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setMessages([]);
+                toast.success("Thread cleared");
+              }}
+            >
+              Clear thread
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

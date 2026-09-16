@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { toast } from "sonner";
 import {
   ConsoleButton,
   DataTable,
@@ -9,10 +11,34 @@ import {
   StatTile,
   StatusBadge,
 } from "@/components/hr/primitives";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { performanceReviews } from "@/lib/hr/data";
 import { labelize } from "@/lib/hr/status";
 
-const cycle = ["objectives_set", "check_in", "manager_review", "employee_feedback", "final_review", "development_plan"];
+const cycle = [
+  "objectives_set",
+  "check_in",
+  "manager_review",
+  "employee_feedback",
+  "final_review",
+  "development_plan",
+];
 
 const modules = [
   { id: "probation_reviews", label: "Probation reviews", count: 8, status: "in_progress" },
@@ -41,6 +67,32 @@ export const Route = createFileRoute("/hr/performance")({
 });
 
 function PerformancePage() {
+  const [activePhase, setActivePhase] = useState(2);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [cadence, setCadence] = useState("Bi-annual");
+  const [reminderDays, setReminderDays] = useState(5);
+
+  const advanceCycle = () => {
+    setConfirmOpen(false);
+    if (activePhase >= cycle.length - 1) {
+      toast.info("Review cycle already at final phase");
+      return;
+    }
+    const nextPhase = activePhase + 1;
+    setActivePhase(nextPhase);
+    toast.success(`Cycle advanced to ${labelize(cycle[nextPhase]!)}`, {
+      description: "52 reviews moved forward",
+    });
+  };
+
+  const saveSettings = () => {
+    setSettingsOpen(false);
+    toast.success("Cycle settings saved", {
+      description: `${cadence} · reminders ${reminderDays}d before due`,
+    });
+  };
+
   return (
     <>
       <PageHeader
@@ -49,8 +101,10 @@ function PerformancePage() {
         subtitle="H2 2026 cycle · 52 reviews in flight · 8 probation checks · avg rating 4.1"
         actions={
           <>
-            <ConsoleButton>Cycle settings</ConsoleButton>
-            <ConsoleButton variant="primary">Start Review Cycle</ConsoleButton>
+            <ConsoleButton onClick={() => setSettingsOpen(true)}>Cycle settings</ConsoleButton>
+            <ConsoleButton variant="primary" onClick={() => setConfirmOpen(true)}>
+              Start Review Cycle
+            </ConsoleButton>
           </>
         }
       />
@@ -68,11 +122,22 @@ function PerformancePage() {
             <div key={phase} className="console-inset p-2.5">
               <div className="flex items-center justify-between">
                 <span className="data-cell text-[10px] text-mute">0{i + 1}</span>
-                <StatusBadge status={i < 2 ? "completed" : i === 2 ? "in_progress" : "not_started"} />
+                <StatusBadge
+                  status={
+                    i < activePhase
+                      ? "completed"
+                      : i === activePhase
+                        ? "in_progress"
+                        : "not_started"
+                  }
+                />
               </div>
               <div className="mt-2 text-[12px] text-fg">{labelize(phase)}</div>
               <div className="mt-2">
-                <Progress value={i < 2 ? 100 : i === 2 ? 54 : 0} tone={i < 2 ? "success" : "warning"} />
+                <Progress
+                  value={i < activePhase ? 100 : i === activePhase ? 54 : 0}
+                  tone={i < activePhase ? "success" : "warning"}
+                />
               </div>
             </div>
           ))}
@@ -80,7 +145,11 @@ function PerformancePage() {
       </Panel>
 
       <div className="grid gap-3 lg:grid-cols-3">
-        <Panel title="Active Reviews" meta={`${performanceReviews.length} shown`} className="lg:col-span-2">
+        <Panel
+          title="Active Reviews"
+          meta={`${performanceReviews.length} shown`}
+          className="lg:col-span-2"
+        >
           <DataTable
             columns={["Employee", "Client", "Cycle", "Phase", "Objectives", "Rating", "Status"]}
             rows={performanceReviews.map((r) => [
@@ -114,6 +183,60 @@ function PerformancePage() {
       </div>
 
       <DemoNote />
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Advance the review cycle?</AlertDialogTitle>
+            <AlertDialogDescription>
+              All 52 in-flight reviews move from {labelize(cycle[activePhase]!)} to{" "}
+              {activePhase < cycle.length - 1 ? labelize(cycle[activePhase + 1]!) : "completion"}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={advanceCycle}>Advance</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cycle settings</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2.5">
+            <label className="block text-[12px] text-dim">
+              Cadence
+              <select
+                value={cadence}
+                onChange={(e) => setCadence(e.target.value)}
+                className="mt-1 h-9 w-full rounded-md bg-panel2 px-3 text-[13px] text-fg ring-1 ring-line outline-none focus:ring-teal/50"
+              >
+                <option>Quarterly</option>
+                <option>Bi-annual</option>
+                <option>Annual</option>
+              </select>
+            </label>
+            <label className="block text-[12px] text-dim">
+              Reminder (days before due)
+              <input
+                type="number"
+                min={1}
+                max={30}
+                value={reminderDays}
+                onChange={(e) => setReminderDays(Number(e.target.value))}
+                className="mt-1 h-9 w-full rounded-md bg-panel2 px-3 text-[13px] text-fg ring-1 ring-line outline-none focus:ring-teal/50"
+              />
+            </label>
+          </div>
+          <DialogFooter>
+            <ConsoleButton variant="primary" onClick={saveSettings}>
+              Save
+            </ConsoleButton>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
